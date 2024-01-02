@@ -16,19 +16,25 @@ set(CMAKE_CXX_STANDARD 17)
 
 # Define MY_SOURCES to be a list of all the source files for my project
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
-add_executable(opengl-cmake "${MY_SOURCES}" "src/boid.cpp")
+add_executable(opengl-cmake "${MY_SOURCES}")
 
 target_compile_options(opengl-cmake PRIVATE -Wall)
+
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/vertex_core.glsl" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/fragment_core.glsl" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/src/Images" DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Images)
 
 add_definitions(-DGLEW_STATIC)
 add_subdirectory(lib/glfw EXCLUDE_FROM_ALL)
 add_subdirectory(lib/glew EXCLUDE_FROM_ALL)
 add_subdirectory(lib/glm EXCLUDE_FROM_ALL)
+add_subdirectory(lib/SOIL2 EXCLUDE_FROM_ALL)
 
 target_link_libraries(opengl-cmake
   PRIVATE glfw
   PRIVATE libglew_static
   PRIVATE glm
+  PRIVATE soil2
 )
 
 target_include_directories(opengl-cmake

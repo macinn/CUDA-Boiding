@@ -1,47 +1,21 @@
-#include <GL/glew.h>
-#include <GLFW/glfw3.h>
+#include "Game.h"
 
-int main(void)
+//ZOOOOOOOOOOOM IN BEFORE RECORDING!
+
+int main()
 {
-    GLFWwindow* window;
+	Game game("YOUTUBE_TUTORIAL",
+		1920, 1080,
+		4, 4,
+		false);
 
-    /* Initialize the library */
-    if (!glfwInit())
-        return -1;
+	//MAIN LOOP
+	while (!game.getWindowShouldClose())
+	{
+		//UPDATE INPUT ---
+		game.update();
+		game.render();	
+	}
 
-
-    /* Create a windowed mode window and its OpenGL context */
-    window = glfwCreateWindow(640, 480, "Hello World", NULL, NULL);
-    if (!window)
-    {
-        glfwTerminate();
-        return -1;
-    }
-
-    /* Make the window's context current */
-    glfwMakeContextCurrent(window);
-
-    GLenum err = glewInit();
-    if (GLEW_OK != err)
-    {
-        return -1;
-    }
-
-    unsigned int a;
-    glGenBuffers(1, &a);
-    /* Loop until the user closes the window */
-    while (!glfwWindowShouldClose(window))
-    {
-        /* Render here */
-        glClear(GL_COLOR_BUFFER_BIT);
-
-        /* Swap front and back buffers */
-        glfwSwapBuffers(window);
-
-        /* Poll for and process events */
-        glfwPollEvents();
-    }
-
-    glfwTerminate();
-    return 0;
+	return 0;
 }
