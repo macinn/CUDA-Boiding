@@ -16,7 +16,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 # Define MY_SOURCES to be a list of all the source files for my project
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
-add_executable(opengl-cmake "${MY_SOURCES}" "src/boid.cpp")
+add_executable(opengl-cmake "${MY_SOURCES}")
 
 target_compile_options(opengl-cmake PRIVATE -Wall)
 
