@@ -183,14 +183,14 @@ void Game::initModels()
 	)
 	);
 
-	this->models.push_back(new Model(
-		glm::vec3(4.f, 0.f, 4.f),
-		this->materials[0],
-		this->textures[TEX_CONTAINER],
-		this->textures[TEX_CONTAINER_SPECULAR],
-		"OBJFiles/ddh.obj"
-	)
-	);
+	//this->models.push_back(new Model(
+	//	glm::vec3(4.f, 0.f, 4.f),
+	//	this->materials[0],
+	//	this->textures[TEX_CONTAINER],
+	//	this->textures[TEX_CONTAINER_SPECULAR],
+	//	"OBJFiles/ddh.obj"
+	//)
+	//);
 
 	for (auto*& i : meshes)
 		delete i;

@@ -4,15 +4,15 @@
 #include<fstream>
 #include<string>
 
-#include<glew.h>
-#include<glfw3.h>
+#include<GL/glew.h>
+#include<GLFW/glfw3.h>
 
-#include<glm.hpp>
-#include<vec2.hpp>
-#include<vec3.hpp>
-#include<vec4.hpp>
-#include<mat4x4.hpp>
-#include<gtc\type_ptr.hpp>
+#include<glm/glm.hpp>
+#include<glm/vec2.hpp>
+#include<glm/vec3.hpp>
+#include<glm/vec4.hpp>
+#include<glm/mat4x4.hpp>
+#include<glm/gtc/type_ptr.hpp>
 
 class Shader
 {
@@ -108,7 +108,7 @@ public:
 
 	//Constructors/Destructors
 	Shader(const int versionMajor, const int versionMinor,
-		char* vertexFile, char* fragmentFile, char* geometryFile = "")
+		char* vertexFile, char* fragmentFile, char* geometryFile = nullptr)
 		: versionMajor(versionMajor), versionMinor(versionMinor)
 	{
 		GLuint vertexShader = 0;
@@ -117,7 +117,7 @@ public:
 
 		vertexShader = loadShader(GL_VERTEX_SHADER, vertexFile);
 
-		if(geometryFile != "")
+		if(geometryFile)
 			geometryShader = loadShader(GL_GEOMETRY_SHADER, geometryFile);
 
 		fragmentShader = loadShader(GL_FRAGMENT_SHADER, fragmentFile);

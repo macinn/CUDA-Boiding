@@ -1,14 +1,14 @@
 #pragma once
 
-#include<glew.h>
-#include<glfw3.h>
+#include<GL/glew.h>
+#include<GLFW/glfw3.h>
 
-#include<glm.hpp>
-#include<vec2.hpp>
-#include<vec3.hpp>
-#include<vec4.hpp>
-#include<mat4x4.hpp>
-#include<gtc\type_ptr.hpp>
+#include<glm/glm.hpp>
+#include<glm/vec2.hpp>
+#include<glm/vec3.hpp>
+#include<glm/vec4.hpp>
+#include<glm/mat4x4.hpp>
+#include<glm/gtc/type_ptr.hpp>
 
 #include"Shader.h"
 
