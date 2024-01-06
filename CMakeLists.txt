@@ -22,7 +22,6 @@ target_compile_options(opengl-cmake PRIVATE -Wall)
 
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/vertex_core.glsl" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/fragment_core.glsl" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/src/Images" DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/Images)
 
 add_definitions(-DGLEW_STATIC)
 add_subdirectory(lib/glfw EXCLUDE_FROM_ALL)

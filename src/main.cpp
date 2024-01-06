@@ -1,4 +1,5 @@
 #include"libs.h"
+#include"BoidDrawer.cpp"
 
 const float fishH = 1.f / 2;
 const float fishW = 0.5f / 2;
@@ -14,7 +15,7 @@ Vertex vertices[] =
 	glm::vec3(0.f - fishW / 2, 0.f - fishH / 2, 0.f - fishW / 2),	glm::vec3(-invSqrt3, -invSqrt3, -invSqrt3),
 };
 unsigned nrOfVertices = sizeof(vertices) / sizeof(Vertex);
-
+	
 GLuint indices[] =
 {
 	0, 1, 2,	
@@ -43,35 +44,35 @@ void updateInput(GLFWwindow* window, glm::vec3& position, glm::vec3& rotation, g
 {
 	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
 	{
-		position.z -= 0.01f;
+		position.z -= 0.001f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
 	{
-		position.z += 0.01f;
+		position.z += 0.001f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
 	{
-		position.x -= 0.01f;
+		position.x -= 0.001f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
 	{
-		position.x += 0.01f;
+		position.x += 0.001f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
 	{
-		rotation.y -= 1.f;
+		rotation.y -= .1f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
 	{
-		rotation.y += 1.f;
+		rotation.y += .1f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_Z) == GLFW_PRESS)
 	{
-		scale += 0.1f;
+		scale += 0.01f;
 	}
 	if (glfwGetKey(window, GLFW_KEY_X) == GLFW_PRESS)
 	{
-		scale -= 0.1f;
+		scale -= 0.01f;
 	}
 }
 
@@ -214,7 +215,7 @@ int main()
 	);
 
 	//LIGHTS
-	glm::vec3 lightPos0(0.f, 0.f, 0.f);
+	glm::vec3 lightPos0(0.f, 0.f, 1.f);
 
 	//INIT UNIFORMS
 	
@@ -236,18 +237,20 @@ int main()
 		updateInput(window);
 
 		//DRAW ---
-		//Clear
-		glClearColor(0.f, 0.f, 0.f, 1.f);
+		// sky blue
+		//glClearColor(0.53f, 0.81f, 0.92f, 1.f);
+		// dark blue
+		glClearColor(0.f, 0.1f, 0.2f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 
 
 		//Move, rotate and scale
 		ModelMatrix = glm::mat4(1.f);
-		ModelMatrix = glm::translate(ModelMatrix, position);
 		ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
 		ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f));
 		ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.z), glm::vec3(0.f, 0.f, 1.f));
+		ModelMatrix = glm::translate(ModelMatrix, position);
 		ModelMatrix = glm::scale(ModelMatrix, scale);
 
 		core_program.setMat4fv(ModelMatrix, "ModelMatrix");
@@ -281,7 +284,6 @@ int main()
 
 		glBindVertexArray(0);
 		glUseProgram(0);
-		glActiveTexture(0);
 	}
 
 	//END OF PROGRAM
@@ -292,3 +294,22 @@ int main()
 
 	return 0;
 }
+
+int main()
+{
+	BoidDrawer drawer("Shoal",
+		1920, 1080,
+		4, 4,
+		false);
+
+	//MAIN LOOP
+	while (!drawer.getWindowShouldClose())
+	{
+		//UPDATE INPUT ---
+		game.update();
+		game.render();
+	}
+
+	return 0;
+}
+

@@ -12,6 +12,27 @@ uniform mat4 ModelMatrix;
 uniform mat4 ViewMatrix;
 uniform mat4 ProjectionMatrix;
 
+mat4 translate(vec3 translation) {
+    return mat4(
+        vec4(1.0, 0.0, 0.0, 0.0),
+        vec4(0.0, 1.0, 0.0, 0.0),
+        vec4(0.0, 0.0, 1.0, 0.0),
+        vec4(translation, 1.0)
+    );
+}
+mat4 rotate(float angle, vec3 axis) {
+    float c = cos(angle);
+    float s = sin(angle);
+    float ic = 1.0 - c;
+
+    return mat4(
+        vec4(ic * axis.x * axis.x + c, ic * axis.x * axis.y - s * axis.z, ic * axis.x * axis.z + s * axis.y, 0.0),
+        vec4(ic * axis.x * axis.y + s * axis.z, ic * axis.y * axis.y + c, ic * axis.y * axis.z - s * axis.x, 0.0),
+        vec4(ic * axis.x * axis.z - s * axis.y, ic * axis.y * axis.z + s * axis.x, ic * axis.z * axis.z + c, 0.0),
+        vec4(0.0, 0.0, 0.0, 1.0)
+    );
+}
+
 void main()
 {
 	vs_position = vec4(ModelMatrix * vec4(vertex_position + vertex_offset, 1.f)).xyz;
