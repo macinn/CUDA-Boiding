@@ -124,7 +124,8 @@ public:
 		//INIT UNIFORMS
 		this->shader->setMat4fv(ViewMatrix, "ViewMatrix");
 		this->shader->setMat4fv(ProjectionMatrix, "ProjectionMatrix");
-		
+		glm::mat4 ModelMatrix(1.f);
+		this->shader->setMat4fv(ModelMatrix, "ModelMatrix");
 		this->initLight();
 	}
 
@@ -160,46 +161,46 @@ public:
 		this->initUniforms();
 	}
 
-	//void updateKeyboardInput()
-	//{
-	//	//Program
-	//	if (glfwGetKey(this->window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
-	//	{
-	//		glfwSetWindowShouldClose(this->window, GLFW_TRUE);
-	//	}
+	void updateKeyboardInput()
+	{
+		//Program
+		if (glfwGetKey(this->window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+		{
+			glfwSetWindowShouldClose(this->window, GLFW_TRUE);
+		}
 
-	//	//Camera
-	//	if (glfwGetKey(this->window, GLFW_KEY_W) == GLFW_PRESS)
-	//	{
-	//		this->camera.move(this->dt, FORWARD);
-	//	}
-	//	if (glfwGetKey(this->window, GLFW_KEY_S) == GLFW_PRESS)
-	//	{
-	//		this->camera.move(this->dt, BACKWARD);
-	//	}
-	//	if (glfwGetKey(this->window, GLFW_KEY_A) == GLFW_PRESS)
-	//	{
-	//		this->camera.move(this->dt, LEFT);
-	//	}
-	//	if (glfwGetKey(this->window, GLFW_KEY_D) == GLFW_PRESS)
-	//	{
-	//		this->camera.move(this->dt, RIGHT);
-	//	}
-	//	if (glfwGetKey(this->window, GLFW_KEY_C) == GLFW_PRESS)
-	//	{
-	//		this->camPosition.y -= 0.05f;
-	//	}
-	//	if (glfwGetKey(this->window, GLFW_KEY_SPACE) == GLFW_PRESS)
-	//	{
-	//		this->camPosition.y += 0.05f;
-	//	}
-	//}
+		//Camera
+		//if (glfwGetKey(this->window, GLFW_KEY_W) == GLFW_PRESS)
+		//{
+		//	this->camera.move(this->dt, FORWARD);
+		//}
+		//if (glfwGetKey(this->window, GLFW_KEY_S) == GLFW_PRESS)
+		//{
+		//	this->camera.move(this->dt, BACKWARD);
+		//}
+		//if (glfwGetKey(this->window, GLFW_KEY_A) == GLFW_PRESS)
+		//{
+		//	this->camera.move(this->dt, LEFT);
+		//}
+		//if (glfwGetKey(this->window, GLFW_KEY_D) == GLFW_PRESS)
+		//{
+		//	this->camera.move(this->dt, RIGHT);
+		//}
+		//if (glfwGetKey(this->window, GLFW_KEY_C) == GLFW_PRESS)
+		//{
+		//	this->camPosition.y -= 0.05f;
+		//}
+		//if (glfwGetKey(this->window, GLFW_KEY_SPACE) == GLFW_PRESS)
+		//{
+		//	this->camPosition.y += 0.05f;
+		//}
+	}
 
 	void updateInput()
 	{
 		glfwPollEvents();
 
-		//this->updateKeyboardInput();
+		this->updateKeyboardInput();
 		//this->updateMouseInput();
 		//this->camera.updateInput(dt, -1, this->mouseOffsetX, this->mouseOffsetY);
 	}
@@ -210,21 +211,104 @@ public:
 		this->updateInput();
 	}
 
+
+
+	void bind()
+	{
+		const float fishH = 1.f / 2;
+		const float fishW = 0.5f / 2;
+		const float invSqrt3 = 1.f / sqrt(3.f);
+
+		Vertex vertices[] =
+		{
+			//Position														//Normals
+			glm::vec3(0.f, 0.f + fishH / 2, 0.f),							glm::vec3(0.f, 1.f, 0.f),
+			glm::vec3(0.f - fishW / 2, 0.f - fishH / 2, 0.f + fishW / 2),	glm::vec3(-invSqrt3, -invSqrt3, +invSqrt3),
+			glm::vec3(0.f + fishW / 2, 0.f - fishH / 2, 0.f + fishW / 2),	glm::vec3(+invSqrt3, -invSqrt3, +invSqrt3),
+			glm::vec3(0.f + fishW / 2, 0.f - fishH / 2, 0.f - fishW / 2),	glm::vec3(+invSqrt3, -invSqrt3, -invSqrt3),
+			glm::vec3(0.f - fishW / 2, 0.f - fishH / 2, 0.f - fishW / 2),	glm::vec3(-invSqrt3, -invSqrt3, -invSqrt3),
+		};
+		unsigned nrOfVertices = sizeof(vertices) / sizeof(Vertex);
+
+		GLuint indices[] =
+		{
+			0, 1, 2,
+			0, 2, 3,
+			0, 3, 4,
+			0, 4, 1,
+			1, 3, 2,
+			4, 3, 1
+		};
+		unsigned nrOfIndices = sizeof(indices) / sizeof(GLuint);
+
+		GLuint VAO;
+		glCreateVertexArrays(1, &VAO);
+		glBindVertexArray(VAO);
+
+		GLuint VBO;
+		glGenBuffers(1, &VBO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+
+		GLuint EBO;
+		glGenBuffers(1, &EBO);
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+		//Position
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, position));
+		glEnableVertexAttribArray(0);
+		//Normal
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, normal));
+		glEnableVertexAttribArray(1);
+
+		//Offset
+		glm::vec3 offsets[] =
+		{
+			glm::vec3(0.f, 0.f, 0.f),
+			glm::vec3(0.f, 0.5f, -15.f),
+			glm::vec3(-1.f, -2.f, -2.5f)
+		};
+
+		unsigned int instanceVBO;
+		glGenBuffers(1, &instanceVBO);
+		glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 3, offsets, GL_STATIC_DRAW);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+
+		glEnableVertexAttribArray(2);
+		glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
+		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+		glBindBuffer(GL_ARRAY_BUFFER, 0);
+		glVertexAttribDivisor(2, 1);
+
+		glVertexAttribDivisor(0, 0);
+		glVertexAttribDivisor(1, 0);
+		glVertexAttribDivisor(2, 1);
+
+		glBindVertexArray(0);
+
+		glBindVertexArray(VAO);
+
+		glDrawElementsInstanced(GL_TRIANGLES, nrOfIndices, GL_UNSIGNED_INT, 0, 3);
+	}
 	void render()
 	{
-		//UPDATE --- 
-		//updateInput(window);
-
 		//DRAW ---
 		//Clear
-		glClearColor(0.f, 0.f, 0.f, 1.f);
+		// sky blue
+		//glClearColor(0.53f, 0.81f, 0.92f, 1.f);
+		// dark blue
+		glClearColor(0.f, 0.1f, 0.2f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
 		//Update the uniforms
-		//this->updateUniforms();
+		//Update the model
 
-
-		// DRAW!!!
+		this->shader->use();
+		this->bind();
+		
+		
 
 		//End Draw
 		glfwSwapBuffers(window);

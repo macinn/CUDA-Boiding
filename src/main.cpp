@@ -1,5 +1,8 @@
 #include"libs.h"
 #include"BoidDrawer.cpp"
+#include <glm/gtc/matrix_access.hpp>
+#include <glm/gtx/string_cast.hpp>
+
 
 const float fishH = 1.f / 2;
 const float fishW = 0.5f / 2;
@@ -26,6 +29,15 @@ GLuint indices[] =
 	4, 3, 1
 };
 unsigned nrOfIndices = sizeof(indices) / sizeof(GLuint);
+
+glm::mat4 createRotationMatrix(const glm::vec3& yLocal, const glm::vec3& targetVector) {
+	glm::vec3 normalizedTarget = glm::normalize(targetVector);
+	glm::vec3 axis = glm::cross(yLocal, normalizedTarget);
+	float dotProductValue = glm::dot(yLocal, normalizedTarget);
+	float angle = glm::acos(dotProductValue);
+	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), angle, axis);
+	return rotationMatrix;
+}
 
 void updateInput(GLFWwindow* window)
 {
@@ -75,6 +87,7 @@ void updateInput(GLFWwindow* window, glm::vec3& position, glm::vec3& rotation, g
 		scale -= 0.01f;
 	}
 }
+
 
 int main()
 {
@@ -163,6 +176,12 @@ int main()
 		glm::vec3(0.f, 0.5f, -15.f),
 		glm::vec3(-1.f, -2.f, -2.5f)
 	};
+	glm::vec3 velocities[] =
+	{
+		glm::vec3(0.001f, 0.f, 0.f),
+		glm::vec3(0.001f, 0.f, 0.f),
+		glm::vec3(0.001f, 0.f, 0.f)
+	};
 
 	unsigned int instanceVBO;
 	glGenBuffers(1, &instanceVBO);
@@ -188,13 +207,6 @@ int main()
 	glm::vec3 rotation(0.f);
 	glm::vec3 scale(1.f);
 
-	glm::mat4 ModelMatrix(1.f);
-	ModelMatrix = glm::translate(ModelMatrix, position);
-	ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
-	ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f));
-	ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.z), glm::vec3(0.f, 0.f, 1.f));
-	ModelMatrix = glm::scale(ModelMatrix, scale);
-
 	glm::vec3 camPostion(0.f, 0.f, 1.f);
 	glm::vec3 worldUp(0.f, 1.f, 0.f);
 	glm::vec3 camFront(0.f, 0.f, -1.f);
@@ -218,13 +230,17 @@ int main()
 	glm::vec3 lightPos0(0.f, 0.f, 1.f);
 
 	//INIT UNIFORMS
-	
-	core_program.setMat4fv(ModelMatrix, "ModelMatrix");
+
 	core_program.setMat4fv(ViewMatrix, "ViewMatrix");
 	core_program.setMat4fv(ProjectionMatrix, "ProjectionMatrix");
 
 	core_program.setVec3f(lightPos0, "lightPos0");
 	core_program.setVec3f(camPostion, "cameraPos");
+	core_program.setVec3f(glm::vec3(1.f, 0.f, 0.f), "vertex_velocity");
+
+	//glm::mat3 rotationMatrix = createRotationMatrix(glm::vec3(0.f, 1.f, 0.f), glm::vec3(1.f, 0.f, 0.f));
+	//core_program.setMat4fv(rotationMatrix, "ModelMatrix");
+
 
 	//MAIN LOOP
 	while (!glfwWindowShouldClose(window))
@@ -243,34 +259,25 @@ int main()
 		glClearColor(0.f, 0.1f, 0.2f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 
+		//glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
 
+		//ProjectionMatrix = glm::perspective(
+		//	glm::radians(fov),
+		//	static_cast<float>(framebufferWidth) / framebufferHeight,
+		//	nearPlane,
+		//	farPlane
+		//);
 
-		//Move, rotate and scale
-		ModelMatrix = glm::mat4(1.f);
-		ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.x), glm::vec3(1.f, 0.f, 0.f));
-		ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.y), glm::vec3(0.f, 1.f, 0.f));
-		ModelMatrix = glm::rotate(ModelMatrix, glm::radians(rotation.z), glm::vec3(0.f, 0.f, 1.f));
-		ModelMatrix = glm::translate(ModelMatrix, position);
-		ModelMatrix = glm::scale(ModelMatrix, scale);
-
-		core_program.setMat4fv(ModelMatrix, "ModelMatrix");
-
-		glfwGetFramebufferSize(window, &framebufferWidth, &framebufferHeight);
-
-		ProjectionMatrix = glm::perspective(
-			glm::radians(fov),
-			static_cast<float>(framebufferWidth) / framebufferHeight,
-			nearPlane,
-			farPlane
-		);
-
-		core_program.setMat4fv(ProjectionMatrix, "ProjectionMatrix");
+		//core_program.setMat4fv(ProjectionMatrix, "ProjectionMatrix");
 
 		//Use a program
 		core_program.use();
 
 		//Bind vertex array object
 		glBindVertexArray(VAO);
+		offsets[0].x += 0.0001f;
+
+		glNamedBufferSubData(instanceVBO, 0, sizeof(glm::vec3) * 3, &offsets[0]);
 
 		//Draw
 		//glDrawArrays(GL_TRIANGLES, 0, nrOfVertices);
@@ -295,19 +302,20 @@ int main()
 	return 0;
 }
 
-int main()
+int main2()
 {
 	BoidDrawer drawer("Shoal",
 		1920, 1080,
 		4, 4,
 		false);
 
+
 	//MAIN LOOP
 	while (!drawer.getWindowShouldClose())
 	{
 		//UPDATE INPUT ---
-		game.update();
-		game.render();
+		drawer.update();
+		drawer.render();
 	}
 
 	return 0;
