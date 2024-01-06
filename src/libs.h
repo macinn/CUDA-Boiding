@@ -18,11 +18,10 @@
 
 #include<SOIL2.h>
 
-#include"Vertex.h"
-#include"Primitives.h"
 #include"Shader.h"
-#include"Texture.h"
-#include"Material.h"
-#include"Mesh.h"
-#include"Model.h"
-#include"Light.h"
+
+struct Vertex
+{
+	glm::vec3 position;
+	glm::vec3 normal;
+};
