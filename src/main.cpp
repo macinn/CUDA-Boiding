@@ -173,31 +173,33 @@ int main()
 	glm::vec3 offsets[] =
 	{
 		glm::vec3(0.f, 0.f, 0.f),
-		glm::vec3(0.f, 0.5f, -15.f),
-		glm::vec3(-1.f, -2.f, -2.5f)
+		glm::vec3(0.f, 0.5f, 0.f),
+		glm::vec3(-1.f, -1.f, 0.f)
 	};
 	glm::vec3 velocities[] =
 	{
-		glm::vec3(0.001f, 0.f, 0.f),
-		glm::vec3(0.001f, 0.f, 0.f),
-		glm::vec3(0.001f, 0.f, 0.f)
+		glm::vec3(0.00001f, 0.f, 0.f),
+		glm::vec3(0.0f, 0.f, 0.f),
+		glm::vec3(1.0f, 0.f, 0.f)
 	};
 
 	unsigned int instanceVBO;
 	glGenBuffers(1, &instanceVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 3, offsets, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 3, offsets, GL_DYNAMIC_DRAW);
 	glEnableVertexAttribArray(2);
-	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glVertexAttribDivisor(2, 1);
 
-	glVertexAttribDivisor(0, 0);
-	glVertexAttribDivisor(1, 0);
-	glVertexAttribDivisor(2, 1);
+	unsigned int instanceVBO1;
+	glGenBuffers(1, &instanceVBO1);
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO1);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 3, velocities, GL_DYNAMIC_DRAW);
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glVertexAttribDivisor(3, 1);
 
 	//BIND VAO 0
 	glBindVertexArray(0);
@@ -236,7 +238,7 @@ int main()
 
 	core_program.setVec3f(lightPos0, "lightPos0");
 	core_program.setVec3f(camPostion, "cameraPos");
-	core_program.setVec3f(glm::vec3(1.f, 0.f, 0.f), "vertex_velocity");
+	//core_program.setVec3f(glm::vec3(1.f, 0.f, 0.f), "vertex_velocity");
 
 	//glm::mat3 rotationMatrix = createRotationMatrix(glm::vec3(0.f, 1.f, 0.f), glm::vec3(1.f, 0.f, 0.f));
 	//core_program.setMat4fv(rotationMatrix, "ModelMatrix");
@@ -275,9 +277,11 @@ int main()
 
 		//Bind vertex array object
 		glBindVertexArray(VAO);
-		offsets[0].x += 0.0001f;
+		offsets[0] += velocities[0];
+		velocities[0].y += 0.00000001f;
 
-		glNamedBufferSubData(instanceVBO, 0, sizeof(glm::vec3) * 3, &offsets[0]);
+		glNamedBufferSubData(instanceVBO, 0, sizeof(glm::vec3) * 3, offsets);
+		glNamedBufferSubData(instanceVBO1, 0, sizeof(glm::vec3) * 3, velocities);
 
 		//Draw
 		//glDrawArrays(GL_TRIANGLES, 0, nrOfVertices);
