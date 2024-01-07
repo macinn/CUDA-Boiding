@@ -11,13 +11,13 @@ private:
 	const uint depth;
 
 	// Boids
+public:
 	glm::vec3* boids_p;
 	glm::vec3* boids_v;
-
 	Flock(uint N, uint width, uint height): N(N), width(width), height(height), depth((width+height)/2)
 	{
-		boids_p = new glm::vec3();
-		boids_v = new glm::vec3();
+		boids_p = new glm::vec3[N]();
+		boids_v = new glm::vec3[N]();
 	}
 
 	~Flock() {
@@ -30,13 +30,6 @@ private:
 			boids_v[i] += cohesion(i) + separation(i) + alignment(i);
 			boids_p[i] += boids_v[i];
 			boundPosition(i);
-		}
-	}
-
-	void draw() {
-		for (uint i = 0; i < N; i++)
-		{
-
 		}
 	}
 

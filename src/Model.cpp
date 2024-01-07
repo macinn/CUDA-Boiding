@@ -1,5 +1,6 @@
 #include"libs.h"
 #include "Shader.h"
+#include "Pyramid.h"
 
 #pragma once
 class InstancedPyramid
@@ -11,8 +12,8 @@ private:
 
 	Vertex* vertices;
 	GLuint* indices;
-	const unsigned int noVerticies = 5;
-	const unsigned int noIndicies = 18;
+	const unsigned int noVerticies = FISH_NO_VERTICES;
+	const unsigned int noIndicies = FISH_NO_INDICES;
 
 	glm::vec3* positions;
 	glm::vec3* velocities;
@@ -20,30 +21,8 @@ private:
 public:
 	InstancedPyramid(unsigned N, glm::vec3* positions, glm::vec3* velocities) :N(N), positions(positions), velocities(velocities)
 	{
-		const float fishH = 1.f / 2;
-		const float fishW = 0.5f / 2;
-		const float invSqrt3 = 1.f / sqrt(3.f);
-
-		vertices = new Vertex[noVerticies]
-		{
-			//Position														//Normals
-			glm::vec3(0.f, 0.f + fishH / 2, 0.f),							glm::vec3(0.f, 1.f, 0.f),
-			glm::vec3(0.f - fishW / 2, 0.f - fishH / 2, 0.f + fishW / 2),	glm::vec3(-invSqrt3, -invSqrt3, +invSqrt3),
-			glm::vec3(0.f + fishW / 2, 0.f - fishH / 2, 0.f + fishW / 2),	glm::vec3(+invSqrt3, -invSqrt3, +invSqrt3),
-			glm::vec3(0.f + fishW / 2, 0.f - fishH / 2, 0.f - fishW / 2),	glm::vec3(+invSqrt3, -invSqrt3, -invSqrt3),
-			glm::vec3(0.f - fishW / 2, 0.f - fishH / 2, 0.f - fishW / 2),	glm::vec3(-invSqrt3, -invSqrt3, -invSqrt3),
-		};
-
-		// Triangle indices
-		indices = new GLuint[noIndicies]
-		{
-			0, 1, 2,
-			0, 2, 3,
-			0, 3, 4,
-			0, 4, 1,
-			1, 3, 2,
-			4, 3, 1
-		};
+		vertices = new Vertex[noVerticies]{ FISH_VERTICES };
+		indices = new GLuint[noIndicies]{ FISH_INDICES };
 	}
 	~InstancedPyramid()
 	{
@@ -74,7 +53,7 @@ public:
 		// instancePosition
 		glGenBuffers(1, &instancePosition);
 		glBindBuffer(GL_ARRAY_BUFFER, instancePosition);
-		glBufferData(GL_ARRAY_BUFFER, this->N * sizeof(glm::vec3), this->positions, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, this->N * sizeof(glm::vec3), this->positions, GL_DYNAMIC_DRAW);
 
 		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
 		glEnableVertexAttribArray(2);
@@ -82,7 +61,7 @@ public:
 		// instancePosition
 		glGenBuffers(1, &instanceVelocity);
 		glBindBuffer(GL_ARRAY_BUFFER, instanceVelocity);
-		glBufferData(GL_ARRAY_BUFFER, this->N * sizeof(glm::vec3), this->velocities, GL_STATIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, this->N * sizeof(glm::vec3), this->velocities, GL_DYNAMIC_DRAW);
 
 		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
 		glEnableVertexAttribArray(3);
@@ -90,12 +69,25 @@ public:
 	}
 	void updateInstancedVBO()
 	{
-
+		glNamedBufferSubData(instancePosition, 0, this->N * sizeof(glm::vec3), this->positions);
+		glNamedBufferSubData(instanceVelocity, 0, this->N * sizeof(glm::vec3), this->velocities);
 	}
 	void render(Shader* shader)
 	{
 		// update 
 		shader->use();
+		glBindVertexArray(VAO);
+		updateInstancedVBO();
+		glDrawElementsInstanced(GL_TRIANGLES, noIndicies, GL_UNSIGNED_INT, 0, N);
+		glBindVertexArray(0);
 
+	}
+	void setPositions(glm::vec3* positions)
+	{
+		this->positions = positions;
+	}
+	void setVelocities(glm::vec3* velocities)
+	{
+		this->velocities = velocities;
 	}
 };

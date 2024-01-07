@@ -1,9 +1,8 @@
 #version 440
-#define eps 1e-8
+#define eps 1e-12
 
 layout(location = 0) in vec3 vertex_position;
 layout(location = 1) in vec3 vertex_normal;
-
 
 layout(location = 2) in vec3 vertex_offset;
 layout(location = 3) in vec3 vertex_velocity;
@@ -42,6 +41,12 @@ mat4 createRotationMatrix(vec3 targetVector) {
 	}
 	vec3 normalizedTarget = normalize(targetVector);
 	vec3 axis = cross(vec3(0.0, 1.0, 0.0), normalizedTarget);
+    if (length(axis) < eps) {
+        if (normalizedTarget.y >= 0.0)
+            return mat4(1.0);
+        else
+            return rotation3d(vec3(1.0, 0.0, 0.0), 3.1415926 );
+    }
 	float dotProductValue = dot(vec3(0.0, 1.0, 0.0), normalizedTarget);
 	float angle = acos(dotProductValue);
     return rotation3d(axis, angle);
@@ -54,7 +59,6 @@ void main()
 	vs_color = vec3(0.f, 1.f, 0.f);
 	vs_normal = mat3(ModelMatrix) * vertex_normal;
 
-	gl_Position = ProjectionMatrix * ViewMatrix * ModelMatrix * vec4(vs_position, 1.f);
-    //gl_Position = vec4(vs_position, 1.f);
-	//gl_Position = vec4(vertex_position + vertex_offset, 1.0);
+    gl_Position = ProjectionMatrix * ViewMatrix * ModelMatrix * vec4(vertex_position, 1.f);
+
 }
