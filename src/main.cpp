@@ -6,27 +6,46 @@
 
 const float fishH = 1.f / 2;
 const float fishW = 0.5f / 2;
-const float invSqrt3 = 1.f / sqrt(3.f);
 
 Vertex vertices[] =
 {
 	//Position														//Normals
-	glm::vec3(0.f, 0.f + fishH / 2, 0.f),							glm::vec3(0.f, 1.f, 0.f),
-	glm::vec3(0.f - fishW / 2, 0.f - fishH / 2, 0.f + fishW / 2),	glm::vec3(-invSqrt3, -invSqrt3, +invSqrt3),
-	glm::vec3(0.f + fishW / 2, 0.f - fishH / 2, 0.f + fishW / 2),	glm::vec3(+invSqrt3, -invSqrt3, +invSqrt3),
-	glm::vec3(0.f + fishW / 2, 0.f - fishH / 2, 0.f - fishW / 2),	glm::vec3(+invSqrt3, -invSqrt3, -invSqrt3),
-	glm::vec3(0.f - fishW / 2, 0.f - fishH / 2, 0.f - fishW / 2),	glm::vec3(-invSqrt3, -invSqrt3, -invSqrt3),
+	//Triangle front
+	glm::vec3(0.f, 0.f + fishH / 2, 0.f),							glm::vec3(0.f, 0.f, 1.f),
+	glm::vec3(0.f - fishW / 2, 0.f - fishH / 2, 0.f + fishW / 2),	glm::vec3(0.f, 0.f, 1.f),
+	glm::vec3(0.f + fishW / 2, 0.f - fishH / 2, 0.f + fishW / 2),	glm::vec3(0.f, 0.f, 1.f),
+
+	//Triangle left
+	glm::vec3(0.f, 0.f + fishH / 2, 0.f),							glm::vec3(-1.f, 0.f, 0.f),
+	glm::vec3(0.f - fishW / 2, 0.f - fishH / 2, 0.f - fishW / 2),	glm::vec3(-1.f, 0.f, 0.f),
+	glm::vec3(0.f - fishW / 2, 0.f - fishH / 2, 0.f + fishW / 2),	glm::vec3(-1.f, 0.f, 0.f),
+
+	//Triangle back
+	glm::vec3(0.f, 0.f + fishH / 2, 0.f),							glm::vec3(0.f, 0.f, -1.f),
+	glm::vec3(0.f + fishW / 2, 0.f - fishH / 2, 0.f - fishW / 2),	glm::vec3(0.f, 0.f, -1.f),
+	glm::vec3(0.f - fishW / 2, 0.f - fishH / 2, 0.f - fishW / 2),	glm::vec3(0.f, 0.f, -1.f),
+
+	//Triangles right
+	glm::vec3(0.f, 0.f + fishH / 2, 0.f),							glm::vec3(1.f, 0.f, 0.f),
+	glm::vec3(0.f + fishW / 2, 0.f - fishH / 2, 0.f + fishW / 2),	glm::vec3(1.f, 0.f, 0.f),
+	glm::vec3(0.f + fishW / 2, 0.f - fishH / 2, 0.f - fishW / 2),	glm::vec3(1.f, 0.f, 0.f),
+
+	//Triangles bottom
+	glm::vec3(0.f + fishW / 2, 0.f - fishH / 2, 0.f + fishW / 2),	glm::vec3(0.f, -1.f, 0.f),
+	glm::vec3(0.f + fishW / 2, 0.f - fishH / 2, 0.f - fishW / 2),	glm::vec3(0.f, -1.f, 0.f),
+	glm::vec3(0.f - fishW / 2, 0.f - fishH / 2, 0.f + fishW / 2),	glm::vec3(0.f, -1.f, 0.f),
+	glm::vec3(0.f - fishW / 2, 0.f - fishH / 2, 0.f - fishW / 2),	glm::vec3(0.f, -1.f, 0.f),
 };
 unsigned nrOfVertices = sizeof(vertices) / sizeof(Vertex);
 	
 GLuint indices[] =
 {
 	0, 1, 2,	
-	0, 2, 3,
-	0, 3, 4,
-	0, 4, 1,
-	1, 3, 2,
-	4, 3, 1
+	3, 4, 5,
+	6, 7, 8,
+	9, 10, 11,
+	12 , 14, 13,
+	13, 14, 15
 };
 unsigned nrOfIndices = sizeof(indices) / sizeof(GLuint);
 
@@ -35,7 +54,7 @@ glm::mat4 createRotationMatrix(const glm::vec3& yLocal, const glm::vec3& targetV
 	glm::vec3 axis = glm::cross(yLocal, normalizedTarget);
 	float dotProductValue = glm::dot(yLocal, normalizedTarget);
 	float angle = glm::acos(dotProductValue);
-	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), angle, axis);
+	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.0f), angle / 2, axis);
 	return rotationMatrix;
 }
 
@@ -89,7 +108,7 @@ void updateInput(GLFWwindow* window, glm::vec3& position, glm::vec3& rotation, g
 }
 
 
-int main()
+int main2()
 {
 	//INIT GLFW
 	glfwInit();
@@ -133,7 +152,6 @@ int main()
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glFrontFace(GL_CCW);
-
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
@@ -173,31 +191,32 @@ int main()
 	glm::vec3 offsets[] =
 	{
 		glm::vec3(0.f, 0.f, 0.f),
-		glm::vec3(0.f, 0.5f, -15.f),
-		glm::vec3(-1.f, -2.f, -2.5f)
+		glm::vec3(0.f, 0.f, 0.f),
+		glm::vec3(0.f, 0.f, 0.f)
 	};
 	glm::vec3 velocities[] =
 	{
-		glm::vec3(0.001f, 0.f, 0.f),
-		glm::vec3(0.001f, 0.f, 0.f),
-		glm::vec3(0.001f, 0.f, 0.f)
+		glm::vec3(0.f, 0.f, 0.f),
+		glm::vec3(0.0f, 0.f, 0.f),
+		glm::vec3(0.0f, 0.f, 0.f)
 	};
-
 	unsigned int instanceVBO;
 	glGenBuffers(1, &instanceVBO);
 	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 3, offsets, GL_STATIC_DRAW);
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
-
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 3, offsets, GL_DYNAMIC_DRAW);
 	glEnableVertexAttribArray(2);
-	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glVertexAttribDivisor(2, 1);
 
-	glVertexAttribDivisor(0, 0);
-	glVertexAttribDivisor(1, 0);
-	glVertexAttribDivisor(2, 1);
+	unsigned int instanceVBO1;
+	glGenBuffers(1, &instanceVBO1);
+	glBindBuffer(GL_ARRAY_BUFFER, instanceVBO1);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 3, velocities, GL_DYNAMIC_DRAW);
+	glEnableVertexAttribArray(3);
+	glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glVertexAttribDivisor(3, 1);
 
 	//BIND VAO 0
 	glBindVertexArray(0);
@@ -207,7 +226,7 @@ int main()
 	glm::vec3 rotation(0.f);
 	glm::vec3 scale(1.f);
 
-	glm::vec3 camPostion(0.f, 0.f, 1.f);
+	glm::vec3 camPostion(0.f, 0.f, 10.f);
 	glm::vec3 worldUp(0.f, 1.f, 0.f);
 	glm::vec3 camFront(0.f, 0.f, -1.f);
 
@@ -235,13 +254,15 @@ int main()
 	core_program.setMat4fv(ProjectionMatrix, "ProjectionMatrix");
 
 	core_program.setVec3f(lightPos0, "lightPos0");
+	
 	core_program.setVec3f(camPostion, "cameraPos");
-	core_program.setVec3f(glm::vec3(1.f, 0.f, 0.f), "vertex_velocity");
+	//core_program.setVec3f(glm::vec3(1.f, 0.f, 0.f), "vertex_velocity");
 
 	//glm::mat3 rotationMatrix = createRotationMatrix(glm::vec3(0.f, 1.f, 0.f), glm::vec3(1.f, 0.f, 0.f));
 	//core_program.setMat4fv(rotationMatrix, "ModelMatrix");
 
 
+	glm::mat4 rotationMatrix = glm::rotate(glm::mat4(1.f), 3.14f, glm::vec3(1.f, 0.f, 0.f));
 	//MAIN LOOP
 	while (!glfwWindowShouldClose(window))
 	{
@@ -275,9 +296,15 @@ int main()
 
 		//Bind vertex array object
 		glBindVertexArray(VAO);
-		offsets[0].x += 0.0001f;
-
-		glNamedBufferSubData(instanceVBO, 0, sizeof(glm::vec3) * 3, &offsets[0]);
+		//offsets[0] += velocities[0];
+		//velocities[0].x -= 0.000001f;
+		//velocities[0].z += 0.000001f;
+		glm::mat4 currentRotation = createRotationMatrix(glm::vec3(0.f, 1.f, 0.f), velocities[0]);
+		currentRotation = glm::rotate(glm::mat4(1.f), 3.14f, glm::vec3(1.f, 0.f, 0.f));
+		//std::cout << glm::to_string(glm::mat3(currentRotation) * glm::vec3(0.f,-1.f,0.f)) << std::endl;
+		//std::cout << glm::to_string(glm::vec3(0.f, -1.f, 0.f) * glm::mat3(currentRotation)) << std::endl;
+		glNamedBufferSubData(instanceVBO, 0, sizeof(glm::vec3) * 3, offsets);
+		glNamedBufferSubData(instanceVBO1, 0, sizeof(glm::vec3) * 3, velocities);
 
 		//Draw
 		//glDrawArrays(GL_TRIANGLES, 0, nrOfVertices);
@@ -302,7 +329,7 @@ int main()
 	return 0;
 }
 
-int main2()
+int main()
 {
 	BoidDrawer drawer("Shoal",
 		1920, 1080,

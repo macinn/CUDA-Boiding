@@ -1,5 +1,7 @@
 #include"libs.h"
 #include "Shader.h"
+#include "Model.cpp"
+#include "Flock.cpp"
 #pragma once
 
 // TODO: destructor
@@ -27,6 +29,9 @@ private:
 	float fov;
 	float nearPlane;
 	float farPlane;
+	//Model
+	InstancedPyramid* model;
+	Flock* flock;
 public:
 	BoidDrawer() = default;
 	~BoidDrawer() = default;
@@ -143,7 +148,7 @@ public:
 		this->framebufferWidth = this->WINDOW_WIDTH;
 		this->framebufferHeight = this->WINDOW_HEIGHT;
 
-		this->camPosition = glm::vec3(0.f, 0.f, 1.f);
+		this->camPosition = glm::vec3(0.f, 0.f, 20.f);
 		this->worldUp = glm::vec3(0.f, 1.f, 0.f);
 		this->camFront = glm::vec3(0.f, 0.f, -1.f);
 
@@ -156,9 +161,10 @@ public:
 		this->initGLEW();
 		this->initOpenGLOptions();
 
-		this->initMatrices();
 		this->initShaders();
+		this->initMatrices();
 		this->initUniforms();
+		this->initModel();
 	}
 
 	void updateKeyboardInput()
@@ -211,87 +217,17 @@ public:
 		this->updateInput();
 	}
 
-
-
-	void bind()
+	void initModel()
 	{
-		const float fishH = 1.f / 2;
-		const float fishW = 0.5f / 2;
-		const float invSqrt3 = 1.f / sqrt(3.f);
-
-		Vertex vertices[] =
-		{
-			//Position														//Normals
-			glm::vec3(0.f, 0.f + fishH / 2, 0.f),							glm::vec3(0.f, 1.f, 0.f),
-			glm::vec3(0.f - fishW / 2, 0.f - fishH / 2, 0.f + fishW / 2),	glm::vec3(-invSqrt3, -invSqrt3, +invSqrt3),
-			glm::vec3(0.f + fishW / 2, 0.f - fishH / 2, 0.f + fishW / 2),	glm::vec3(+invSqrt3, -invSqrt3, +invSqrt3),
-			glm::vec3(0.f + fishW / 2, 0.f - fishH / 2, 0.f - fishW / 2),	glm::vec3(+invSqrt3, -invSqrt3, -invSqrt3),
-			glm::vec3(0.f - fishW / 2, 0.f - fishH / 2, 0.f - fishW / 2),	glm::vec3(-invSqrt3, -invSqrt3, -invSqrt3),
-		};
-		unsigned nrOfVertices = sizeof(vertices) / sizeof(Vertex);
-
-		GLuint indices[] =
-		{
-			0, 1, 2,
-			0, 2, 3,
-			0, 3, 4,
-			0, 4, 1,
-			1, 3, 2,
-			4, 3, 1
-		};
-		unsigned nrOfIndices = sizeof(indices) / sizeof(GLuint);
-
-		GLuint VAO;
-		glCreateVertexArrays(1, &VAO);
-		glBindVertexArray(VAO);
-
-		GLuint VBO;
-		glGenBuffers(1, &VBO);
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-
-		GLuint EBO;
-		glGenBuffers(1, &EBO);
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
-
-		//Position
-		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, position));
-		glEnableVertexAttribArray(0);
-		//Normal
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (GLvoid*)offsetof(Vertex, normal));
-		glEnableVertexAttribArray(1);
-
-		//Offset
-		glm::vec3 offsets[] =
-		{
-			glm::vec3(0.f, 0.f, 0.f),
-			glm::vec3(0.f, 0.5f, -15.f),
-			glm::vec3(-1.f, -2.f, -2.5f)
-		};
-
-		unsigned int instanceVBO;
-		glGenBuffers(1, &instanceVBO);
-		glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-		glBufferData(GL_ARRAY_BUFFER, sizeof(glm::vec3) * 3, offsets, GL_STATIC_DRAW);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-
-		glEnableVertexAttribArray(2);
-		glBindBuffer(GL_ARRAY_BUFFER, instanceVBO);
-		glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
-		glBindBuffer(GL_ARRAY_BUFFER, 0);
-		glVertexAttribDivisor(2, 1);
-
-		glVertexAttribDivisor(0, 0);
-		glVertexAttribDivisor(1, 0);
-		glVertexAttribDivisor(2, 1);
-
-		glBindVertexArray(0);
-
-		glBindVertexArray(VAO);
-
-		glDrawElementsInstanced(GL_TRIANGLES, nrOfIndices, GL_UNSIGNED_INT, 0, 3);
+		const unsigned int N = 300;
+		this->flock = new Flock(N, 10, 10);
+		this->flock->init();
+		glm::vec3* positions = flock->boids_p;
+		glm::vec3* velocities = flock->boids_v;
+		this->model = new InstancedPyramid(N, positions, velocities);
+		this->model->initBuffers();
 	}
+
 	void render()
 	{
 		//DRAW ---
@@ -305,10 +241,11 @@ public:
 		//Update the uniforms
 		//Update the model
 
-		this->shader->use();
-		this->bind();
-		
-		
+		//this->flock->update();
+		//this->model->setPositions(this->flock->boids_p);
+		//this->model->setVelocities(this->flock->boids_v);
+		this->model->updateInstancedVBO();
+		this->model->render(this->shader);
 
 		//End Draw
 		glfwSwapBuffers(window);

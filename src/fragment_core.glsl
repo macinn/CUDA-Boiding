@@ -11,15 +11,13 @@ uniform vec3 cameraPos;
 
 void main()
 {
-	//fs_color = vec4(vs_color, 1.f);
-	//fs_color = texture(texture0, vs_texcoord) * texture(texture1, vs_texcoord) * vec4(vs_color, 1.f);
-	
+
 	//Ambient light
 	vec3 ambientLight = vec3(0.1f, 0.1f, 0.1f);
 
 	//Diffuse light
 	vec3 posToLightDirVec = normalize(lightPos0 - vs_position);
-	vec3 diffuseColor = vec3(0.9f, 0.9f, 0.9f);
+	vec3 diffuseColor = vec3(1.f, 1.f, 1.f);
 	float diffuse = clamp(dot(posToLightDirVec, normalize(vs_normal)), 0, 1);
 	vec3 diffuseFinal = diffuseColor * diffuse;
 
@@ -30,12 +28,11 @@ void main()
 	//float specularConstant = pow(max(dot(posToViewDirVec, reflectDirVec), 0), 35);
 	//vec3 specularFinal = vec3(1.f, 1.f, 1.f) * specularConstant;
 
-	//Attenuation
 
 	//Final light
 	fs_color =
 		vec4(vs_color, 1.f)
 		* (vec4(ambientLight, 1.f) + vec4(diffuseFinal, 1.f));
 //		+ vec4(specularFinal, 1.f));
-	fs_color = vec4(vs_color, 1.f);
+//	fs_color = vec4(vs_color, 1.f);
 }
