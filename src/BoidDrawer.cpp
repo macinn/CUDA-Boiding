@@ -32,6 +32,12 @@ private:
 	//Model
 	InstancedPyramid* model;
 	Flock* flock;
+
+	float dt = 0.f;
+	float curTime = glfwGetTime();
+	float lastTime = curTime;
+	//Box
+
 public:
 	BoidDrawer() = default;
 	~BoidDrawer() = default;
@@ -121,7 +127,7 @@ public:
 
 	void initLight()
 	{
-		this->shader->setVec3f(glm::vec3(0.f, 0.f, 1.f), "lightPos0");
+		this->shader->setVec3f(this->camPosition, "lightPos0");
 	}
 
 	void initUniforms()
@@ -148,7 +154,7 @@ public:
 		this->framebufferWidth = this->WINDOW_WIDTH;
 		this->framebufferHeight = this->WINDOW_HEIGHT;
 
-		this->camPosition = glm::vec3(0.f, 0.f, 20.f);
+		this->camPosition = glm::vec3(15.f, 15.f, 50.f);
 		this->worldUp = glm::vec3(0.f, 1.f, 0.f);
 		this->camFront = glm::vec3(0.f, 0.f, -1.f);
 
@@ -213,19 +219,41 @@ public:
 
 	void update()
 	{
-		//this->updateDt();
+		this->updateDt();
 		this->updateInput();
+
+		this->flock->update(this->dt);
+		this->model->setPositions(this->flock->boids_p);
+		//this->model->setVelocities(this->flock->boids_v);
+		this->model->updateInstancedVBO();
+	}
+
+	void updateDt()
+	{
+		this->curTime = static_cast<float>(glfwGetTime());
+		this->dt = this->curTime - this->lastTime;
+		this->lastTime = this->curTime;
 	}
 
 	void initModel()
 	{
-		const unsigned int N = 300;
-		this->flock = new Flock(N, 10, 10);
+		const unsigned int N = 30;
+		this->flock = new Flock(N, 30, 30);
 		this->flock->init();
 		glm::vec3* positions = flock->boids_p;
 		glm::vec3* velocities = flock->boids_v;
 		this->model = new InstancedPyramid(N, positions, velocities);
 		this->model->initBuffers();
+	}
+
+	int getWindowShouldClose()
+	{
+		return glfwWindowShouldClose(this->window);
+	}
+
+	void setWindowShouldClose()
+	{
+		glfwSetWindowShouldClose(this->window, GLFW_TRUE);
 	}
 
 	void render()
@@ -241,10 +269,6 @@ public:
 		//Update the uniforms
 		//Update the model
 
-		//this->flock->update();
-		//this->model->setPositions(this->flock->boids_p);
-		//this->model->setVelocities(this->flock->boids_v);
-		this->model->updateInstancedVBO();
 		this->model->render(this->shader);
 
 		//End Draw
@@ -253,15 +277,5 @@ public:
 
 		glBindVertexArray(0);
 		glUseProgram(0);
-	}
-
-	int getWindowShouldClose()
-	{
-		return glfwWindowShouldClose(this->window);
-	}
-
-	void setWindowShouldClose()
-	{
-		glfwSetWindowShouldClose(this->window, GLFW_TRUE);
 	}
 };
