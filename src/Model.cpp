@@ -28,8 +28,6 @@ public:
 	{
 		delete[] vertices;
 		delete[] indices;
-		delete[] positions;
-		delete[] velocities;
 	}
 	void initBuffers()
 	{

@@ -10,34 +10,49 @@ private:
 	const uint height;
 	const uint depth;
 
-	// Boids
 public:
+	// Parameters
+	float turnFactor = 0.2f;
+	float visualRange = 8.f;
+	float protectedRange = 1.f;
+	float centeringFactor = 0.0005f;
+	float avoidFactor = 0.05f;
+	float matchingFactor = 0.1f;
+	float maxSpeed = 10.f;
+	float minSpeed = 5.f;
+	const float marginFactor = 0.f;
+
+	// Boids
 	glm::vec3* boids_p;
 	glm::vec3* boids_v;
-	Flock(uint N, uint width, uint height): N(N), width(width), height(height), depth((width+height)/2)
+	Flock(uint N, uint width, uint height, uint depth = 0): 
+		N(N), width(width), height(height), depth(!depth ? (width+height)/2 : depth)
 	{
 		boids_p = new glm::vec3[N]();
 		boids_v = new glm::vec3[N]();
 	}
-
 	~Flock() {
 		delete[] boids_p;
 		delete[] boids_v;
 	}
-
 	void update(float dt) {
 		for (uint i = 0; i < N; i++) {
 			boids_v[i] += cohesion(i) + separation(i) + alignment(i);
-			boids_p[i] += boids_v[i] * dt;
-			boundPosition(i, dt);
+			boundPosition(i);
 			boundVelocity(i);
+
+			boids_p[i] += boids_v[i] * dt;
 		}
 	}
-
 	void boundVelocity(int i) {
-		const float maxVelocity = 10.f;
-		if (glm::l2Norm(boids_v[i]) > maxVelocity) {
-			boids_v[i] *= 0.9f;
+		float speed = glm::l2Norm(boids_v[i]);
+		if (speed > maxSpeed) {
+			boids_v[i] /= speed;
+			boids_v[i] *= maxSpeed;
+		}
+		else if (speed < minSpeed) {
+			boids_v[i] /= speed;
+			boids_v[i] *= minSpeed;
 		}
 	}	
 	void init() {
@@ -47,65 +62,73 @@ public:
 		std::uniform_real_distribution<> h(0, height);
 		std::uniform_real_distribution<> z(0, depth);
 
-		float boxSize = 2 * separationRadius;
+		float boxSize = 2 * protectedRange;
 		uint indexStride = (width - 1)/boxSize + 1;
 		for (uint i = 0; i < N; i++) {
 			boids_p[i] = glm::vec3(w(gen), h(gen), z(gen));
 		}
 	}
-
-	glm::vec3 getCenter() {
-		glm::vec3 center = glm::vec3(0.0f);
-		for (uint i = 0; i < N; i++) {
-			center += boids_p[i];
-		}
-		return center;
-	}
-
-	const float cohesionCoefficient = 0.0001f;
 	glm::vec3 cohesion(int i) {
-		glm::vec3 center = getCenter();
-		glm::vec3 direction = center - boids_p[i];
-		return direction * cohesionCoefficient;
-	}
-
-	float separationRadius = 1.f;
-	float separationCoef = 0.0001f;
-	glm::vec3 separation(int i) {
-		glm::vec3 direction = glm::vec3(0.0f);
-		for (uint j = 0; j < N; j++)
-		{
-			if (i != j && glm::l2Norm(boids_p[i]-boids_p[j]) < separationRadius)
-			{
-				direction -= boids_p[i] - boids_p[j];
-			}
-		}
-		return direction*separationCoef;
-	}
-
-	const float alignmentCoefficient = 0.0001f;
-	glm::vec3 alignment(int i) {
-		glm::vec3 averageVelocity = glm::vec3(0.0f);
-		for (uint j = 0; j < N; j++) {
+		glm::vec3 center = glm::vec3(0.0f);
+		unsigned int count = 0;
+		for (int j = 0; j < N; j++) {
 			if (i != j) {
-				averageVelocity += boids_v[i];
+				if (glm::distance(boids_p[i], boids_p[j]) < visualRange) {
+					center += boids_p[j];
+					count++;
+				}
+			}
+		}	
+		if (count > 0) {
+			center /= count;
+		}
+		return (center - boids_p[i])*centeringFactor;
+	}
+	glm::vec3 separation(int i) {
+		glm::vec3 close = glm::vec3(0.0f);
+		for (int j = 0; j < N; j++) {
+			if (i != j) {
+				if (glm::distance(boids_p[i], boids_p[j]) < protectedRange) {
+					close += boids_p[i] - boids_p[j];
+				}
 			}
 		}
-		averageVelocity /= N - 1;
-		return (averageVelocity - boids_v[i]) * alignmentCoefficient;
+		return close;
 	}
-
-	float boundCoefficient = 0.5f;
-	void boundPosition(int i, float dt) {
-		dt = 1;
-		if (   boids_p[i].x < 0	|| boids_p[i].x > width
-			|| boids_p[i].y < 0 || boids_p[i].y > height
-			|| boids_p[i].z < 0 || boids_p[i].z > depth)
-		{
-			glm::vec3 center = glm::vec3(width / 2, height / 2, depth / 2);
-			glm::vec3 toCenter = center - boids_p[i];
-			boids_v[i] = toCenter * 30.f;
-			//boids_v[i] = glm::vec3(0.f);
+	glm::vec3 alignment(int i) {
+		unsigned int count = 0;
+		glm::vec3 vel = glm::vec3(0.0f);
+		for (int j = 0; j < N; j++) {
+			if (i != j) {
+				if (glm::distance(boids_p[i], boids_p[j]) < protectedRange) {
+					count++;
+					vel += boids_v[j];
+				}
+			}
+		}
+		if (count > 0) {
+			vel /= count;
+		}
+		return (vel - boids_v[i])*matchingFactor;
+	}
+	void boundPosition(int i) {
+		if (boids_p[i].x < width * marginFactor) {
+			boids_v[i].x += turnFactor;
+		}
+		if (boids_p[i].x > width * (1 - marginFactor)) {
+			boids_v[i].x -= turnFactor;
+		}
+		if (boids_p[i].y < height * marginFactor) {
+			boids_v[i].y += turnFactor;
+		}
+		if (boids_p[i].y > height * (1 - marginFactor)) {
+			boids_v[i].y -= turnFactor;
+		}
+		if (boids_p[i].z < depth * marginFactor) {
+			boids_v[i].z += turnFactor;
+		}
+		if (boids_p[i].z > depth * (1 - marginFactor)) {
+			boids_v[i].z -= turnFactor;
 		}
 	}	
 };
