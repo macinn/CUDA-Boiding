@@ -304,7 +304,7 @@ public:
 
 	void initModel()
 	{
-		const unsigned int N = 1000;
+		const unsigned int N = 5000;
 		this->flock = new Flock(N, 30, 30);
 		glm::vec3* positions = flock->boids_p;
 		glm::vec3* velocities = flock->boids_v;

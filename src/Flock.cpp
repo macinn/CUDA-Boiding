@@ -10,34 +10,17 @@ private:
 	const uint height;
 	const uint depth;
 
-	uint* boids_grid_id;
+	glm::ivec3* boids_grid_pos;
 	
 	float grid_size;
 	int grid_size_x;
 	int grid_size_y;
 	int grid_size_z;
 
-	uint getGridId(uint x, uint y, uint z) {
-		return x + y * grid_size_x + z * grid_size_x * grid_size_y;
-	}
-	uint getGridId(glm::vec3 pos) {
-		return getGridId(pos.x / grid_size, pos.y / grid_size, pos.z / grid_size);
-	}
-	void getFromGridId(uint index, int& x, int& y, int& z) {
-		if (index == 0) {
-			x = 0;
-			y = 0;
-			z = 0;
-		}
-		else {
-			x = index % grid_size_x;
-			y = (index / grid_size_x) % grid_size_y;
-			z = index / (grid_size_x * grid_size_y);
-		}
-	}
 	void updateGrid() {
 		for (uint i = 0; i < N; i++) {
-			boids_grid_id[i] = getGridId(boids_p[i]);
+			boids_grid_pos[i] = glm::ivec3(
+				boids_p[i].x / grid_size, boids_p[i].y / grid_size, boids_p[i].z / grid_size);
 		}	
 	}
 	void init() {
@@ -71,7 +54,7 @@ public:
 	{
 		boids_p = new glm::vec3[N]();
 		boids_v = new glm::vec3[N]();
-		boids_grid_id = new uint[N]();
+		boids_grid_pos = new glm::ivec3[N]();
 		setVisualRange(visualRange);
 		init();
 	}
@@ -85,7 +68,7 @@ public:
 	~Flock() {
 		delete[] boids_p;
 		delete[] boids_v;
-		delete[] boids_grid_id;
+		delete[] boids_grid_pos;
 	}
 	void update(float dt) {
 
@@ -94,29 +77,14 @@ public:
 		const float protectedRangeSquared = protectedRange * protectedRange;
 
 		for (uint i = 0; i < N; i++) {
-
 			uint countVisible = 0;
 			uint countClose = 0;
 			glm::vec3 vel = glm::vec3(0.0f);
 			glm::vec3 center = glm::vec3(0.0f);
 			glm::vec3 close = glm::vec3(0.0f);
-			const uint index_i = boids_grid_id[i];
-			int x_i, y_i, z_i;
-			getFromGridId(index_i, x_i, y_i, z_i);
-			const int x_begin = std::max(x_i - 1, 0);
-			const int x_end = std::min(x_i + 1, grid_size_x - 1);
-			const int y_begin = std::max(y_i - 1, 0);
-			const int y_end = std::min(y_i + 1, grid_size_y - 1);
-			const int z_begin = std::max(z_i - 1, 0);
-			const int z_end = std::min(z_i + 1, grid_size_z - 1);
 
 			for (uint j = 0; j < N; j++) {
-				int x_j, y_j, z_j;
-				getFromGridId(boids_grid_id[j], x_j, y_j, z_j);
-				if (x_j >= x_begin && x_j <= x_end
-					&& y_j >= y_begin && y_j <= y_end
-					&& z_j >= z_begin && z_j <= z_end
-					&& i != j) {
+				if (i != j && glm::lMaxNorm(boids_grid_pos[i] - boids_grid_pos[j]) <= 1) {
 					const float distanceSquared = glm::distance2(boids_p[i], boids_p[j]);
 					if (distanceSquared < visualRangeSquared)
 					{
