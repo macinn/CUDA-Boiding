@@ -17,8 +17,6 @@ class Camera
 private:
 	glm::mat4 ViewMatrix;
 
-	GLfloat movementSpeed;
-	GLfloat sensitivity;
 
 	glm::vec3 worldUp;
 	glm::vec3 position;
@@ -42,12 +40,15 @@ private:
 	}
 
 public:
+	GLfloat movementSpeed;
+	GLfloat sensitivity;
+
 	Camera(glm::vec3 position, glm::vec3 direction, glm::vec3 worldUp)
 	{
 		this->ViewMatrix = glm::mat4(1.f);
 
-		this->movementSpeed = 3.f;
-		this->sensitivity = 5.f;
+		this->movementSpeed = 8.f;
+		this->sensitivity = 2.f;
 
 		this->worldUp = worldUp;
 		this->position = position;

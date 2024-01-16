@@ -4,6 +4,8 @@
 #include "Flock.cpp"
 #include "Camera.cpp"
 #include "Box.cpp"
+#include "backends/imgui_impl_opengl3.h"
+#include "backends/imgui_impl_glfw.h"
 #pragma once
 
 // TODO: destructor
@@ -44,7 +46,16 @@ private:
 	float dt = 0.f;
 	float curTime = glfwGetTime();
 	float lastTime = curTime;
-	//Box
+	
+	//Mouse Input
+	double lastMouseX;
+	double lastMouseY;
+	double mouseX;
+	double mouseY;
+	double mouseOffsetX;
+	double mouseOffsetY;
+	bool firstMouse;
+	bool spacePressed = false;
 
 public:
 	BoidDrawer() = default;
@@ -121,7 +132,7 @@ public:
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-		//glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	}
 
 	void initMatrices()
@@ -192,6 +203,8 @@ public:
 		this->initMatrices();
 		this->initUniforms();
 		this->initModel();
+
+		this->initImgui();
 	}
 
 	void updateKeyboardInput()
@@ -219,24 +232,55 @@ public:
 		{
 			this->camera->move(this->dt, RIGHT);
 		}
-		if (glfwGetKey(this->window, GLFW_KEY_C) == GLFW_PRESS)
-		{
-			this->camPosition.y -= 0.05f;
-		}
-		if (glfwGetKey(this->window, GLFW_KEY_SPACE) == GLFW_PRESS)
-		{
-			this->camPosition.y += 0.05f;
-		}
 	}
-
+	
 	void updateInput()
 	{
 		glfwPollEvents();
 
 		this->updateKeyboardInput();
-		//this->updateMouseInput();
-		//this->camera.updateInput(dt, -1, this->mouseOffsetX, this->mouseOffsetY);
-		this->camera->updateInput(dt, -1, 0, 0);
+		this->updateMouseInput();
+		this->camera->updateInput(dt, -1, this->mouseOffsetX, this->mouseOffsetY);
+	}
+
+	void updateMouseInput()
+	{
+		int spaceState = glfwGetKey(window, GLFW_KEY_SPACE);
+
+		if (spaceState == GLFW_PRESS && !spacePressed)
+		{
+			spacePressed = true;
+			if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL && !this->firstMouse)
+			{
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+				this->firstMouse = true;
+			}
+			else
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);	
+		}
+		else if(spaceState == GLFW_RELEASE)
+		{
+			spacePressed = false;
+			if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
+			{
+				glfwGetCursorPos(this->window, &this->mouseX, &this->mouseY);
+
+				if (this->firstMouse)
+				{
+					this->lastMouseX = this->mouseX;
+					this->lastMouseY = this->mouseY;
+					this->firstMouse = false;
+				}
+
+				this->mouseOffsetX = this->mouseX - this->lastMouseX;
+				this->mouseOffsetY = this->lastMouseY - this->mouseY;
+
+				this->lastMouseX = this->mouseX;
+				this->lastMouseY = this->mouseY;
+			}
+		}
+
+		
 	}
 
 	void update()
@@ -282,9 +326,60 @@ public:
 		glfwSetWindowShouldClose(this->window, GLFW_TRUE);
 	}
 	
+	void initImgui()
+	{
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		ImGuiIO& io = ImGui::GetIO();
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+		// Setup Dear ImGui style
+		ImGui::StyleColorsDark();
+		//ImGui::StyleColorsLight();
+
+		// Setup Platform/Renderer backends
+		ImGui_ImplGlfw_InitForOpenGL(this->window, true);
+		ImGui_ImplOpenGL3_Init("#version 330");
+	}
+
+	void renderImgui()
+	{
+		// Start the Dear ImGui frame
+		ImGui_ImplOpenGL3_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+			ImGuiIO& io = ImGui::GetIO();
+			static float f = 0.0f;
+			static int counter = 0;
+
+			ImGui::Begin("Settings"); 
+			ImGui::Text("Press space to enable/disable mouse!");
+			//ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+			ImGui::InputFloat("turnFactor", &this->flock->turnFactor, 0.0f, 1.0f);
+			ImGui::InputFloat("visualRange", &this->flock->visualRange, 0.0f, 1.0f);
+			ImGui::InputFloat("protectedRange", &this->flock->protectedRange, 0.0f, 1.0f);
+			ImGui::InputFloat("centeringFactor	", &this->flock->centeringFactor, 0.0f, 1.0f);
+			ImGui::InputFloat("avoidFactor", &this->flock->avoidFactor, 0.0f, 1.0f);
+			ImGui::InputFloat("matchingFactor", &this->flock->matchingFactor, 0.0f, 1.0f);
+			ImGui::InputFloat("maxSpeed", &this->flock->maxSpeed, 0.0f, 1.0f);
+			ImGui::InputFloat("minSpeed", &this->flock->minSpeed, 0.0f, 1.0f);
+			ImGui::NewLine();
+			ImGui::InputFloat("cameraSpeed", &this->camera->movementSpeed, 0.0f, 1.0f);
+			ImGui::InputFloat("sensitivity", &this->camera->sensitivity, 0.0f, 1.0f);
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+			ImGui::End();
+		
+
+		ImGui::Render();
+		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+	}
+
 	void updateUniforms()
 	{
 		this->ViewMatrix = this->camera->getViewMatrix();
+		this->shader->setVec3f(this->camera->getPosition(), "lightPos0");
 		this->shader->setMat4fv(this->ViewMatrix, "ViewMatrix");
 		this->boxShader->setMat4fv(this->ViewMatrix, "ViewMatrix");
 
@@ -311,8 +406,10 @@ public:
 		// sky blue
 		//glClearColor(0.53f, 0.81f, 0.92f, 1.f);
 		// dark blue
+
 		glClearColor(0.f, 0.1f, 0.2f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
+		renderImgui();
 
 		//Update the uniforms
 		this->updateUniforms();
@@ -321,6 +418,7 @@ public:
 		this->model->render(this->shader);
 		this->box->render(this->boxShader);
 
+		
 		//End Draw
 		glfwSwapBuffers(window);
 		glFlush();
