@@ -11,10 +11,11 @@ private:
 	const uint depth;
 
 	uint* boids_grid_id;
-	float grid_size = 2 * visualRange;
-	uint grid_size_x = (width - 1) / grid_size + 1;
-	uint grid_size_y = (height - 1) / grid_size + 1;
-	uint grid_size_z = (depth - 1) / grid_size + 1;
+	
+	float grid_size;
+	int grid_size_x;
+	int grid_size_y;
+	int grid_size_z;
 
 	uint getGridId(uint x, uint y, uint z) {
 		return x + y * grid_size_x + z * grid_size_x * grid_size_y;
@@ -22,23 +23,38 @@ private:
 	uint getGridId(glm::vec3 pos) {
 		return getGridId(pos.x / grid_size, pos.y / grid_size, pos.z / grid_size);
 	}
+	void getFromGridId(uint index, int& x, int& y, int& z) {
+		if (index == 0) {
+			x = 0;
+			y = 0;
+			z = 0;
+		}
+		else {
+			x = index % grid_size_x;
+			y = (index / grid_size_x) % grid_size_y;
+			z = index / (grid_size_x * grid_size_y);
+		}
+	}
 	void updateGrid() {
 		for (uint i = 0; i < N; i++) {
 			boids_grid_id[i] = getGridId(boids_p[i]);
 		}	
 	}
-	bool isNeighbor(uint x, uint y, uint z) {
-		const uint x_begin = std::max(x - 1, 0u);
-		const uint x_end = std::min(x + 1, grid_size_x - 1);
-		const uint y_begin = std::max(y - 1, 0u);
-		const uint y_end = std::min(y + 1, grid_size_y - 1);
-		const uint z_begin = std::max(z - 1, 0u);
-		const uint z_end = std::min(z + 1, grid_size_z - 1);
+	void init() {
+		std::default_random_engine rd{ static_cast<long unsigned int>(time(0)) };
+		std::mt19937 gen{ rd() };
+		std::uniform_real_distribution<> w(0, width);
+		std::uniform_real_distribution<> h(0, height);
+		std::uniform_real_distribution<> z(0, depth);
+
+		for (uint i = 0; i < N; i++) {
+			boids_p[i] = glm::vec3(w(gen), h(gen), z(gen));
+		}
 	}
 public:
 	// Parameters
 	float turnFactor = 0.2f;
-	float visualRange = 8.f;
+	float visualRange = 5.f;	
 	float protectedRange = 1.f;
 	float centeringFactor = 0.0005f;
 	float avoidFactor = 0.05f;
@@ -51,11 +67,20 @@ public:
 	glm::vec3* boids_p;
 	glm::vec3* boids_v;
 	Flock(uint N, uint width, uint height, uint depth = 0): 
-		N(N), width(width), height(height), depth(!depth ? (width+height)/2 : depth)
+		N(N), width(width), height(height), depth(!depth ? (width+height)/2 : depth)		
 	{
 		boids_p = new glm::vec3[N]();
 		boids_v = new glm::vec3[N]();
 		boids_grid_id = new uint[N]();
+		setVisualRange(visualRange);
+		init();
+	}
+	void setVisualRange(float visualRange) {
+		this->visualRange = visualRange;
+		this->grid_size = 1.f * visualRange;
+		this->grid_size_x = (width - 1) / grid_size + 1;
+		this->grid_size_y = (height - 1) / grid_size + 1;
+		this->grid_size_z = (depth - 1) / grid_size + 1;
 	}
 	~Flock() {
 		delete[] boids_p;
@@ -63,9 +88,10 @@ public:
 		delete[] boids_grid_id;
 	}
 	void update(float dt) {
+
 		updateGrid();
-		float visualRangeSquared = visualRange * visualRange;
-		float protectedRangeSquared = protectedRange * protectedRange;
+		const float visualRangeSquared = visualRange * visualRange;
+		const float protectedRangeSquared = protectedRange * protectedRange;
 
 		for (uint i = 0; i < N; i++) {
 
@@ -74,10 +100,24 @@ public:
 			glm::vec3 vel = glm::vec3(0.0f);
 			glm::vec3 center = glm::vec3(0.0f);
 			glm::vec3 close = glm::vec3(0.0f);
+			const uint index_i = boids_grid_id[i];
+			int x_i, y_i, z_i;
+			getFromGridId(index_i, x_i, y_i, z_i);
+			const int x_begin = std::max(x_i - 1, 0);
+			const int x_end = std::min(x_i + 1, grid_size_x - 1);
+			const int y_begin = std::max(y_i - 1, 0);
+			const int y_end = std::min(y_i + 1, grid_size_y - 1);
+			const int z_begin = std::max(z_i - 1, 0);
+			const int z_end = std::min(z_i + 1, grid_size_z - 1);
 
 			for (uint j = 0; j < N; j++) {
-				if (i != j) {
-					float distanceSquared = glm::distance2(boids_p[i], boids_p[j]);
+				int x_j, y_j, z_j;
+				getFromGridId(boids_grid_id[j], x_j, y_j, z_j);
+				if (x_j >= x_begin && x_j <= x_end
+					&& y_j >= y_begin && y_j <= y_end
+					&& z_j >= z_begin && z_j <= z_end
+					&& i != j) {
+					const float distanceSquared = glm::distance2(boids_p[i], boids_p[j]);
 					if (distanceSquared < visualRangeSquared)
 					{
 						center += boids_p[j];
@@ -126,19 +166,7 @@ public:
 			boids_v[i] *= minSpeed;
 		}
 	}	
-	void init() {
-		std::default_random_engine rd{ static_cast<long unsigned int>(time(0)) };
-		std::mt19937 gen{ rd() };
-		std::uniform_real_distribution<> w(0, width);
-		std::uniform_real_distribution<> h(0, height);
-		std::uniform_real_distribution<> z(0, depth);
 
-		float boxSize = 2 * protectedRange;
-		uint indexStride = (width - 1)/boxSize + 1;
-		for (uint i = 0; i < N; i++) {
-			boids_p[i] = glm::vec3(w(gen), h(gen), z(gen));
-		}
-	}
 	glm::vec3 cohesion(int i) {
 		glm::vec3 center = glm::vec3(0.0f);
 		unsigned int count = 0;

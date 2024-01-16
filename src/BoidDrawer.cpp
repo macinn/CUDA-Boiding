@@ -304,9 +304,8 @@ public:
 
 	void initModel()
 	{
-		const unsigned int N = 500;
+		const unsigned int N = 1000;
 		this->flock = new Flock(N, 30, 30);
-		this->flock->init();
 		glm::vec3* positions = flock->boids_p;
 		glm::vec3* velocities = flock->boids_v;
 		this->model = new InstancedPyramid(N, positions, velocities);
@@ -409,7 +408,6 @@ public:
 
 		glClearColor(0.f, 0.1f, 0.2f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
-		renderImgui();
 
 		//Update the uniforms
 		this->updateUniforms();
@@ -417,6 +415,7 @@ public:
 
 		this->model->render(this->shader);
 		this->box->render(this->boxShader);
+		renderImgui();
 
 		
 		//End Draw
