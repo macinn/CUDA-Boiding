@@ -1,15 +1,15 @@
-#include"libs.h"
-#include "Shader.h"
-#include "Model.cpp"
-#include "Flock.cpp"
+#include "BoidsLogic.cpp"
+#include "BoidsModel.cpp"
 #include "Camera.cpp"
 #include "Box.cpp"
+
 #include "backends/imgui_impl_opengl3.h"
 #include "backends/imgui_impl_glfw.h"
+
 #pragma once
 
 // TODO: destructor
-class BoidDrawer
+class BoidsDrawer
 {
 private:
 	GLFWwindow* window;
@@ -17,6 +17,7 @@ private:
 	const int WINDOW_HEIGHT;
 	int framebufferWidth;
 	int framebufferHeight;
+
 	Shader* shader;
 	Shader* boxShader;
 
@@ -32,15 +33,15 @@ private:
 	glm::vec3 camPosition;
 	glm::vec3 worldUp;
 	glm::vec3 camFront;
-
 	glm::mat4 ProjectionMatrix;
+
 	float fov;
 	float nearPlane;
 	float farPlane;
 
 	//Model
-	InstancedPyramid* model;
-	Flock* flock;
+	BoidsModel* boidsModel;
+	BoidsLogic* boidsLogic;
 	Box* box;
 
 	float dt = 0.f;
@@ -58,17 +59,16 @@ private:
 	bool spacePressed = false;
 
 public:
-	BoidDrawer() = default;
-	~BoidDrawer()
+	~BoidsDrawer()
 	{
-		//glfwDestroyWindow(this->window);
-		//glfwTerminate();
+		glfwDestroyWindow(this->window);
+		glfwTerminate();
 
 		delete this->shader;
 		delete this->boxShader;
 		delete this->camera;
-		delete this->model;
-		delete this->flock;
+		delete this->boidsModel;
+		delete this->boidsLogic;
 		delete this->box;
 	}
 
@@ -94,7 +94,7 @@ public:
 		}
 
 		glfwGetFramebufferSize(this->window, &this->framebufferWidth, &this->framebufferHeight);
-		glfwSetFramebufferSizeCallback(window, BoidDrawer::framebuffer_resize_callback);
+		glfwSetFramebufferSizeCallback(window, BoidsDrawer::framebuffer_resize_callback);
 
 		glfwMakeContextCurrent(this->window);
 	}
@@ -152,8 +152,8 @@ public:
 	void initShaders()
 	{
 		// TODO: change version inside of shader
-		this->shader = new Shader("vertex_core.glsl", "fragment_core.glsl");
-		this->boxShader = new Shader("box/vertex_box.glsl", "box/fragment_box.glsl");
+		this->shader = new Shader("shaders/boids/vertex_core.glsl", "shaders/boids/fragment_core.glsl");
+		this->boxShader = new Shader("shaders/box/vertex_box.glsl", "shaders/box/fragment_box.glsl");
 	}
 
 	void initLight()
@@ -171,10 +171,10 @@ public:
 		this->initLight();
 	}
 
-	BoidDrawer(const char* title,
+	BoidsDrawer(const char* title,
 		const int WINDOW_WIDTH, const int WINDOW_HEIGHT,
 		const int GL_VERSION_MAJOR, const int GL_VERSION_MINOR,
-		bool resizable
+		bool resizable, uint N, uint size
 		) :WINDOW_WIDTH(WINDOW_WIDTH),
 		WINDOW_HEIGHT(WINDOW_HEIGHT),
 		GL_VERSION_MAJOR(GL_VERSION_MAJOR),
@@ -202,7 +202,7 @@ public:
 		this->initShaders();
 		this->initMatrices();
 		this->initUniforms();
-		this->initModel();
+		this->initModel(N, size);
 
 		this->initImgui();
 	}
@@ -218,19 +218,19 @@ public:
 		//Camera
 		if (glfwGetKey(this->window, GLFW_KEY_W) == GLFW_PRESS)
 		{
-			this->camera->move(this->dt, FORWARD);
+			this->camera->updateKeyboardInput(this->dt, FORWARD);
 		}
 		if (glfwGetKey(this->window, GLFW_KEY_S) == GLFW_PRESS)
 		{
-			this->camera->move(this->dt, BACKWARD);
+			this->camera->updateKeyboardInput(this->dt, BACKWARD);
 		}
 		if (glfwGetKey(this->window, GLFW_KEY_A) == GLFW_PRESS)
 		{
-			this->camera->move(this->dt, LEFT);
+			this->camera->updateKeyboardInput(this->dt, LEFT);
 		}
 		if (glfwGetKey(this->window, GLFW_KEY_D) == GLFW_PRESS)
 		{
-			this->camera->move(this->dt, RIGHT);
+			this->camera->updateKeyboardInput(this->dt, RIGHT);
 		}
 	}
 	
@@ -240,7 +240,7 @@ public:
 
 		this->updateKeyboardInput();
 		this->updateMouseInput();
-		this->camera->updateInput(dt, -1, this->mouseOffsetX, this->mouseOffsetY);
+		this->camera->updateMouseInput(dt, this->mouseOffsetX, this->mouseOffsetY);
 	}
 
 	void updateMouseInput()
@@ -288,10 +288,10 @@ public:
 		this->updateDt();
 		this->updateInput();
 
-		this->flock->update(this->dt);
-		this->model->setPositions(this->flock->boids_p);
+		this->boidsLogic->update(this->dt);
+		//this->model->setPositions(this->flock->boids_p);
 		//this->model->setVelocities(this->flock->boids_v);
-		this->model->updateInstancedVBO();
+		this->boidsModel->updateInstancedVBO();
 	}
 
 	void updateDt()
@@ -299,20 +299,18 @@ public:
 		this->curTime = static_cast<float>(glfwGetTime());
 		this->dt = this->curTime - this->lastTime;
 		this->lastTime = this->curTime;
-		//std::cout << 1 / this->dt << "\n";
 	}
 
-	void initModel()
+	void initModel(uint N, uint size)
 	{
-		const unsigned int N = 3000;
-		this->flock = new Flock(N, 30, 30);
-		this->flock->init();
-		glm::vec3* positions = flock->boids_p;
-		glm::vec3* velocities = flock->boids_v;
-		this->model = new InstancedPyramid(N, positions, velocities);
-		this->model->initBuffers();
+		this->boidsLogic = new BoidsLogic(N, size, size, size);
+		this->boidsLogic->init();
 
-		this->box = new Box(30, 30, 30);
+		this->boidsModel = new BoidsModel(N, 
+			this->boidsLogic->boids_p, this->boidsLogic->boids_v);
+		this->boidsModel->initBuffers();
+
+		this->box = new Box(size, size, size);
 		this->box->initBuffers();
 	}
 
@@ -328,6 +326,7 @@ public:
 	
 	void initImgui()
 	{
+		// Setup Dear ImGui context
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO();
@@ -336,7 +335,6 @@ public:
 
 		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();
-		//ImGui::StyleColorsLight();
 
 		// Setup Platform/Renderer backends
 		ImGui_ImplGlfw_InitForOpenGL(this->window, true);
@@ -350,26 +348,25 @@ public:
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 
-			ImGuiIO& io = ImGui::GetIO();
-			static float f = 0.0f;
-			static int counter = 0;
+		ImGuiIO& io = ImGui::GetIO();
 
-			ImGui::Begin("Settings"); 
-			ImGui::Text("Press space to enable/disable mouse!");
-			//ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-			ImGui::InputFloat("turnFactor", &this->flock->turnFactor, 0.0f, 1.0f);
-			ImGui::InputFloat("visualRange", &this->flock->visualRange, 0.0f, 1.0f);
-			ImGui::InputFloat("protectedRange", &this->flock->protectedRange, 0.0f, 1.0f);
-			ImGui::InputFloat("centeringFactor	", &this->flock->centeringFactor, 0.0f, 1.0f);
-			ImGui::InputFloat("avoidFactor", &this->flock->avoidFactor, 0.0f, 1.0f);
-			ImGui::InputFloat("matchingFactor", &this->flock->matchingFactor, 0.0f, 1.0f);
-			ImGui::InputFloat("maxSpeed", &this->flock->maxSpeed, 0.0f, 1.0f);
-			ImGui::InputFloat("minSpeed", &this->flock->minSpeed, 0.0f, 1.0f);
-			ImGui::NewLine();
-			ImGui::InputFloat("cameraSpeed", &this->camera->movementSpeed, 0.0f, 1.0f);
-			ImGui::InputFloat("sensitivity", &this->camera->sensitivity, 0.0f, 1.0f);
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-			ImGui::End();
+		ImGui::Begin("Settings"); 
+		ImGui::Text("Press SPACE to enable/disable mouse.");
+		ImGui::Text("Press ESC to close window.");
+		//ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+		ImGui::InputFloat("turnFactor", &this->boidsLogic->turnFactor, 0.0f, 1.0f);
+		ImGui::InputFloat("visualRange", &this->boidsLogic->visualRange, 0.0f, 1.0f);
+		ImGui::InputFloat("protectedRange", &this->boidsLogic->protectedRange, 0.0f, 1.0f);
+		ImGui::InputFloat("centeringFactor	", &this->boidsLogic->centeringFactor, 0.0f, 1.0f);
+		ImGui::InputFloat("avoidFactor", &this->boidsLogic->avoidFactor, 0.0f, 1.0f);
+		ImGui::InputFloat("matchingFactor", &this->boidsLogic->matchingFactor, 0.0f, 1.0f);
+		ImGui::InputFloat("maxSpeed", &this->boidsLogic->maxSpeed, 0.0f, 1.0f);
+		ImGui::InputFloat("minSpeed", &this->boidsLogic->minSpeed, 0.0f, 1.0f);
+		ImGui::NewLine();
+		ImGui::InputFloat("cameraSpeed", &this->camera->movementSpeed, 0.0f, 1.0f);
+		ImGui::InputFloat("sensitivity", &this->camera->sensitivity, 0.0f, 1.0f);
+		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+		ImGui::End();
 		
 
 		ImGui::Render();
@@ -415,7 +412,7 @@ public:
 		this->updateUniforms();
 		//Update the model
 
-		this->model->render(this->shader);
+		this->boidsModel->render(this->shader);
 		this->box->render(this->boxShader);
 
 		

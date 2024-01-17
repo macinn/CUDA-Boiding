@@ -1,26 +1,19 @@
+#include <fstream>
+#include <string>
+#include <iostream>
+
+#include <GL/glew.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/type_ptr.hpp>
+
 #pragma once
-
-#include<iostream>
-#include<fstream>
-#include<string>
-
-#include<GL/glew.h>
-#include<GLFW/glfw3.h>
-
-#include<glm/glm.hpp>
-#include<glm/vec2.hpp>
-#include<glm/vec3.hpp>
-#include<glm/vec4.hpp>
-#include<glm/mat4x4.hpp>
-#include<glm/gtc/type_ptr.hpp>
 
 class Shader
 {
 private:
-	//Member variables
 	GLuint id;
 
-	//Private functions
+	// Load shader as string from file
 	std::string loadShaderSource(char* fileName)
 	{
 		std::string temp = "";
@@ -28,7 +21,6 @@ private:
 
 		std::ifstream in_file;
 
-		//Vertex
 		in_file.open(fileName);
 
 		if (in_file.is_open())
@@ -42,10 +34,10 @@ private:
 		}
 
 		in_file.close();
-		
 		return src;
 	}
 
+	// Compile shader
 	GLuint loadShader(GLenum type, char* fileName)
 	{
 		char infoLog[512];
@@ -68,7 +60,8 @@ private:
 		return shader;
 	}
 
-	void linkProgram(GLuint vertexShader, GLuint geometryShader, GLuint fragmentShader)
+	// Link shaders
+	void linkProgram(GLuint vertexShader, GLuint fragmentShader)
 	{
 		char infoLog[512];
 		GLint success;
@@ -76,10 +69,6 @@ private:
 		this->id = glCreateProgram();
 
 		glAttachShader(this->id, vertexShader);
-
-		if(geometryShader)
-			glAttachShader(this->id, geometryShader);
-
 		glAttachShader(this->id, fragmentShader);
 
 		glLinkProgram(this->id);
@@ -94,28 +83,21 @@ private:
 
 		glUseProgram(0);
 	}
-
 public:
 
-	//Constructors/Destructors
-	Shader(char* vertexFile, char* fragmentFile, char* geometryFile = nullptr)
+	// Create shader from files
+	Shader(char* vertexFile, char* fragmentFile)
 	{
 		GLuint vertexShader = 0;
-		GLuint geometryShader = 0;
 		GLuint fragmentShader = 0;
 
 		vertexShader = loadShader(GL_VERTEX_SHADER, vertexFile);
-
-		if(geometryFile)
-			geometryShader = loadShader(GL_GEOMETRY_SHADER, geometryFile);
-
 		fragmentShader = loadShader(GL_FRAGMENT_SHADER, fragmentFile);
 
-		this->linkProgram(vertexShader, geometryShader, fragmentShader);
+		this->linkProgram(vertexShader, fragmentShader);
 
-		//End
-		glDeleteShader(vertexShader);
-		glDeleteShader(geometryShader);
+		// Delete shaders data on CPU
+		glDeleteShader(vertexShader);;
 		glDeleteShader(fragmentShader);
 	}
 
@@ -124,7 +106,7 @@ public:
 		glDeleteProgram(this->id);
 	}
 
-	//Set uniform functions
+	// Set uniform functions
 	void use()
 	{
 		glUseProgram(this->id);
@@ -135,33 +117,7 @@ public:
 		glUseProgram(0);
 	}
 
-	void set1i(GLint value, const GLchar* name)
-	{
-		this->use();
-
-		glUniform1i(glGetUniformLocation(this->id, name), value);
-
-		this->unuse();
-	}
-
-	void set1f(GLfloat value, const GLchar* name)
-	{
-		this->use();
-
-		glUniform1f(glGetUniformLocation(this->id, name), value);
-
-		this->unuse();
-	}
-
-	void setVec2f(glm::fvec2 value, const GLchar* name)
-	{
-		this->use();
-
-		glUniform2fv(glGetUniformLocation(this->id, name), 1, glm::value_ptr(value));
-
-		this->unuse();
-	}
-
+	// Set unfiform values
 	void setVec3f(glm::fvec3 value, const GLchar* name)
 	{
 		this->use();
@@ -170,7 +126,6 @@ public:
 
 		this->unuse();
 	}
-
 	void setVec4f(glm::fvec4 value, const GLchar* name)
 	{
 		this->use();
@@ -179,7 +134,6 @@ public:
 
 		this->unuse();
 	}
-
 	void setMat3fv(glm::mat3 value, const GLchar* name, GLboolean transpose = GL_FALSE)
 	{
 		this->use();
@@ -188,7 +142,6 @@ public:
 
 		this->unuse();
 	}
-
 	void setMat4fv(glm::mat4 value, const GLchar* name, GLboolean transpose = GL_FALSE)
 	{
 		this->use();

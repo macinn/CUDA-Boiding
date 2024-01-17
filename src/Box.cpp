@@ -1,7 +1,7 @@
-#include"libs.h"
-#include "Shader.h"
+#include "Shader.cpp"
 
 #pragma once
+
 class Box
 {
 private:
@@ -35,6 +35,10 @@ public:
 	{
 		delete[] vertices;
 		delete[] indices;
+
+		glDeleteVertexArrays(1, &this->VAO);
+		glDeleteBuffers(1, &this->VBO);
+		glDeleteBuffers(1, &this->EBO);
 	}
 	void initBuffers()
 	{

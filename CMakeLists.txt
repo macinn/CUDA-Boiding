@@ -30,10 +30,12 @@ file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/
 add_executable(opengl-cmake ${MY_SOURCES} ${IMGUI_SOURCES})
 target_compile_options(opengl-cmake PRIVATE -Wall)
 
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/vertex_core.glsl" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/fragment_core.glsl" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/box/fragment_box.glsl" "${CMAKE_CURRENT_BINARY_DIR}/box/fragment_box.glsl" COPYONLY)
-configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/box/vertex_box.glsl" "${CMAKE_CURRENT_BINARY_DIR}/box/vertex_box.glsl" COPYONLY)
+# configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/vertex_core.glsl" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+# configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/fragment_core.glsl" ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
+# configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/box/fragment_box.glsl" "${CMAKE_CURRENT_BINARY_DIR}/box/fragment_box.glsl" COPYONLY)
+# configure_file("${CMAKE_CURRENT_SOURCE_DIR}/src/box/vertex_box.glsl" "${CMAKE_CURRENT_BINARY_DIR}/box/vertex_box.glsl" COPYONLY)
+file(COPY src/shaders DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
+
 
 add_definitions(-DGLEW_STATIC)
 add_subdirectory(lib/glfw EXCLUDE_FROM_ALL)

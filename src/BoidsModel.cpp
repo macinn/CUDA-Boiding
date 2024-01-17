@@ -1,9 +1,15 @@
-#include"libs.h"
-#include "Shader.h"
-#include "Pyramid.h"
+#include "Shader.cpp"
+#include "Model.h"
 
 #pragma once
-class InstancedPyramid
+
+struct Vertex
+{
+	glm::vec3 position;
+	glm::vec3 normal;
+};
+
+class BoidsModel
 {
 private:
 	GLuint VAO, VBO, EBO;
@@ -12,22 +18,28 @@ private:
 
 	Vertex* vertices;
 	GLuint* indices;
-	const unsigned int noVerticies = FISH_NO_VERTICES;
-	const unsigned int noIndicies = FISH_NO_INDICES;
+	const unsigned int noVerticies = BOID_NO_VERTICES;
+	const unsigned int noIndicies = BOID_NO_INDICES;
 
 	glm::vec3* positions;
 	glm::vec3* velocities;
 	const unsigned int N;
 public:
-	InstancedPyramid(unsigned N, glm::vec3* positions, glm::vec3* velocities) :N(N), positions(positions), velocities(velocities)
+	BoidsModel(unsigned N, glm::vec3* positions, glm::vec3* velocities) :N(N), positions(positions), velocities(velocities)
 	{
-		vertices = new Vertex[noVerticies]{ FISH_VERTICES };
-		indices = new GLuint[noIndicies]{ FISH_INDICES };
+		vertices = new Vertex[noVerticies]{ BOID_VERTICES };
+		indices = new GLuint[noIndicies]{ BOID_INDICES };
 	}
-	~InstancedPyramid()
+	~BoidsModel()
 	{
 		delete[] vertices;
 		delete[] indices;
+
+		glDeleteVertexArrays(1, &this->VAO);
+		glDeleteVertexArrays(1, &this->instancePosition);
+		glDeleteVertexArrays(1, &this->instanceVelocity);
+		glDeleteBuffers(1, &this->VBO);
+		glDeleteBuffers(1, &this->EBO);
 	}
 	void initBuffers()
 	{

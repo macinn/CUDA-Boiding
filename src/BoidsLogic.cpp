@@ -3,7 +3,9 @@
 #include <random>
 #define uint unsigned int
 
-class Flock {
+#pragma once
+
+class BoidsLogic {
 private:
 	const uint N;
 	const uint width;
@@ -25,13 +27,13 @@ public:
 	// Boids
 	glm::vec3* boids_p;
 	glm::vec3* boids_v;
-	Flock(uint N, uint width, uint height, uint depth = 0): 
+	BoidsLogic(uint N, uint width, uint height, uint depth = 0):
 		N(N), width(width), height(height), depth(!depth ? (width+height)/2 : depth)
 	{
 		boids_p = new glm::vec3[N]();
 		boids_v = new glm::vec3[N]();
 	}
-	~Flock() {
+	~BoidsLogic() {
 		delete[] boids_p;
 		delete[] boids_v;
 	}
@@ -80,8 +82,6 @@ public:
 				+ close * avoidFactor
 				+ (vel - boids_v[i]) * matchingFactor;
 
-
-
 			boundPosition(i);
 			boundVelocity(i);
 			boids_p[i] += boids_v[i] * dt;
@@ -99,7 +99,7 @@ public:
 		}
 	}	
 	void init() {
-		std::default_random_engine rd{ static_cast<long unsigned int>(time(0)) };
+		std::default_random_engine rd{ static_cast<long uint>(time(0)) };
 		std::mt19937 gen{ rd() };
 		std::uniform_real_distribution<> w(0, width);
 		std::uniform_real_distribution<> h(0, height);
@@ -113,7 +113,7 @@ public:
 	}
 	glm::vec3 cohesion(int i) {
 		glm::vec3 center = glm::vec3(0.0f);
-		unsigned int count = 0;
+		uint count = 0;
 		for (int j = 0; j < N; j++) {
 			if (i != j) {
 				if (glm::distance(boids_p[i], boids_p[j]) < visualRange) {
@@ -139,7 +139,7 @@ public:
 		return close * avoidFactor;
 	}
 	glm::vec3 alignment(int i) {
-		unsigned int count = 0;
+		uint count = 0;
 		glm::vec3 vel = glm::vec3(0.0f);
 		for (int j = 0; j < N; j++) {
 			if (i != j) {

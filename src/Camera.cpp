@@ -1,14 +1,8 @@
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+
 #pragma once
-
-#include<iostream>
-
-#include<GL/glew.h>
-#include<GLFW/glfw3.h>
-
-#include<glm/glm.hpp>
-#include<glm/vec3.hpp>
-#include<glm/mat4x4.hpp>
-#include<glm/gtc/matrix_transform.hpp>
 
 enum direction { FORWARD = 0, BACKWARD, LEFT, RIGHT };
 
@@ -17,22 +11,24 @@ class Camera
 private:
 	glm::mat4 ViewMatrix;
 
-
+	// Position varaibles
 	glm::vec3 worldUp;
 	glm::vec3 position;
 	glm::vec3 front;
 	glm::vec3 right;
 	glm::vec3 up;
 
-	GLfloat pitch;
-	GLfloat yaw;
-	GLfloat roll;
+	// Euler angles
+	GLfloat rotationX;
+	GLfloat rotationY;
+	GLfloat rotationZ;
 
+	// Updates camera orientation vectors
 	void updateCameraVectors()
 	{
-		this->front.x = cos(glm::radians(this->yaw)) * cos(glm::radians(this->pitch));
-		this->front.y = sin(glm::radians(this->pitch));
-		this->front.z = sin(glm::radians(this->yaw)) * cos(glm::radians(this->pitch));
+		this->front.x = cos(glm::radians(this->rotationZ)) * cos(glm::radians(this->rotationX));
+		this->front.y = sin(glm::radians(this->rotationX));
+		this->front.z = sin(glm::radians(this->rotationZ)) * cos(glm::radians(this->rotationX));
 
 		this->front = glm::normalize(this->front);
 		this->right = glm::normalize(glm::cross(this->front, this->worldUp));
@@ -40,9 +36,11 @@ private:
 	}
 
 public:
+	// Movement variables
 	GLfloat movementSpeed;
 	GLfloat sensitivity;
 
+	// Constructor
 	Camera(glm::vec3 position, glm::vec3 direction, glm::vec3 worldUp)
 	{
 		this->ViewMatrix = glm::mat4(1.f);
@@ -55,16 +53,16 @@ public:
 		this->right = glm::vec3(0.f);
 		this->up = worldUp;
 
-		this->pitch = 0.f;
-		this->yaw = -90.f;
-		this->roll = 0.f;
+		this->rotationX = 0.f;
+		this->rotationZ = 0.f;
+		this->rotationY = 0.f;
 
 		this->updateCameraVectors();
 	}
 
 	~Camera() {}
 
-	//Accessors
+	// Update and return view matrix
 	const glm::mat4 getViewMatrix()
 	{
 		this->updateCameraVectors();
@@ -74,13 +72,14 @@ public:
 		return this->ViewMatrix;
 	}
 
+	// Get camera position
 	const glm::vec3 getPosition() const
 	{
 		return this->position;
 	}
 
-	//Functions
-	void move(const float& dt, const int direction)
+	// Update position
+	void updateKeyboardInput(const float& dt, const int direction)
 	{
 		//Update position vector
 		switch (direction)
@@ -102,24 +101,18 @@ public:
 		}
 	}
 
+	// Update rotation
 	void updateMouseInput(const float& dt, const double& offsetX, const double& offsetY)
 	{
-		//Update pitch yaw and roll
-		this->pitch += static_cast<GLfloat>(offsetY) * this->sensitivity * dt;
-		this->yaw += static_cast<GLfloat>(offsetX) * this->sensitivity * dt;
+		this->rotationX += (GLfloat)offsetY * this->sensitivity * dt;
+		this->rotationZ += (GLfloat)offsetX * this->sensitivity * dt;
 
-		if (this->pitch > 80.f)
-			this->pitch = 80.f;
-		else if (this->pitch < -80.f)
-			this->pitch = -80.f;
+		if (this->rotationX > 80.f)
+			this->rotationX = 80.f;
+		else if (this->rotationX < -80.f)
+			this->rotationX = -80.f;
 
-		if (this->yaw > 360.f || this->yaw < -360.f)
-			this->yaw = 0.f;
+		if (this->rotationZ > 360.f || this->rotationZ < -360.f)
+			this->rotationZ = 0.f;
 	}
-
-	void updateInput(const float& dt, const int direction, const double& offsetX, const double& offsetY)
-	{
-		this->updateMouseInput(dt, offsetX, offsetY);
-	}
-
 };
