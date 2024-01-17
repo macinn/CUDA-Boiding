@@ -10,31 +10,6 @@ private:
 	const uint height;
 	const uint depth;
 
-	uint* boids_grid_id;
-	float grid_size = 2 * visualRange;
-	uint grid_size_x = (width - 1) / grid_size + 1;
-	uint grid_size_y = (height - 1) / grid_size + 1;
-	uint grid_size_z = (depth - 1) / grid_size + 1;
-
-	uint getGridId(uint x, uint y, uint z) {
-		return x + y * grid_size_x + z * grid_size_x * grid_size_y;
-	}
-	uint getGridId(glm::vec3 pos) {
-		return getGridId(pos.x / grid_size, pos.y / grid_size, pos.z / grid_size);
-	}
-	void updateGrid() {
-		for (uint i = 0; i < N; i++) {
-			boids_grid_id[i] = getGridId(boids_p[i]);
-		}	
-	}
-	bool isNeighbor(uint x, uint y, uint z) {
-		const uint x_begin = std::max(x - 1, 0u);
-		const uint x_end = std::min(x + 1, grid_size_x - 1);
-		const uint y_begin = std::max(y - 1, 0u);
-		const uint y_end = std::min(y + 1, grid_size_y - 1);
-		const uint z_begin = std::max(z - 1, 0u);
-		const uint z_end = std::min(z + 1, grid_size_z - 1);
-	}
 public:
 	// Parameters
 	float turnFactor = 0.2f;
@@ -55,15 +30,12 @@ public:
 	{
 		boids_p = new glm::vec3[N]();
 		boids_v = new glm::vec3[N]();
-		boids_grid_id = new uint[N]();
 	}
 	~Flock() {
 		delete[] boids_p;
 		delete[] boids_v;
-		delete[] boids_grid_id;
 	}
 	void update(float dt) {
-		updateGrid();
 		float visualRangeSquared = visualRange * visualRange;
 		float protectedRangeSquared = protectedRange * protectedRange;
 
