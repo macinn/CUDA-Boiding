@@ -25,9 +25,6 @@ private:
 	const unsigned int noVerticies = BOID_NO_VERTICES;
 	const unsigned int noIndicies = BOID_NO_INDICES;
 	
-	// IInstance specific data pointers
-	glm::vec3* positions;
-	glm::vec3* velocities;
 	// Number of boids
 	const unsigned int N;
 
@@ -54,7 +51,7 @@ private:
 		// instancePosition
 		glGenBuffers(1, &instancePosition);
 		glBindBuffer(GL_ARRAY_BUFFER, instancePosition);
-		glBufferData(GL_ARRAY_BUFFER, this->N * sizeof(glm::vec3), this->positions, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, this->N * sizeof(glm::vec3), NULL, GL_DYNAMIC_DRAW);
 
 		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
 		glEnableVertexAttribArray(2);
@@ -62,22 +59,16 @@ private:
 		// instancePosition
 		glGenBuffers(1, &instanceVelocity);
 		glBindBuffer(GL_ARRAY_BUFFER, instanceVelocity);
-		glBufferData(GL_ARRAY_BUFFER, this->N * sizeof(glm::vec3), this->velocities, GL_DYNAMIC_DRAW);
+		glBufferData(GL_ARRAY_BUFFER, this->N * sizeof(glm::vec3), NULL, GL_DYNAMIC_DRAW);
 
 		glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(glm::vec3), (void*)0);
 		glEnableVertexAttribArray(3);
 		glVertexAttribDivisor(3, 1);
 	}
 
-	// Update instance specific data on GPU
-	void updateInstancedVBO()
-	{
-		glNamedBufferSubData(instancePosition, 0, this->N * sizeof(glm::vec3), this->positions);
-		glNamedBufferSubData(instanceVelocity, 0, this->N * sizeof(glm::vec3), this->velocities);
-	}
 public:
 	// Constructor and destructor
-	BoidsModel(unsigned N, glm::vec3* positions, glm::vec3* velocities) :N(N), positions(positions), velocities(velocities)
+	BoidsModel(unsigned N) :N(N)
 	{
 		vertices = new Vertex[noVerticies]{ BOID_VERTICES };
 		indices = new GLuint[noIndicies]{ BOID_INDICES };
@@ -99,20 +90,17 @@ public:
 	{
 		shader->use();
 		glBindVertexArray(VAO);
-		updateInstancedVBO();
 		glDrawElementsInstanced(GL_TRIANGLES, noIndicies, GL_UNSIGNED_INT, 0, N);
 		glBindVertexArray(0);
-
 	}
 
-	// Setters
-	void setPositions(glm::vec3* positions)
+	// Getters to pass buffers to logic class
+	GLuint getPositionBuffer()
 	{
-		this->positions = positions;
+		return instancePosition;
 	}
-
-	void setVelocities(glm::vec3* velocities)
+	GLuint getVelocityBuffer()
 	{
-		this->velocities = velocities;
+		return instanceVelocity;
 	}
 };

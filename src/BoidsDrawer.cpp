@@ -245,8 +245,7 @@ private:
 	{
 		this->boidsLogic = new BoidsLogic(N, size, size, size);
 
-		this->boidsModel = new BoidsModel(N,
-			this->boidsLogic->boids_p, this->boidsLogic->boids_v);
+		this->boidsModel = new BoidsModel(N);
 
 		this->boxModel = new BoxModel(size, size, size);
 	}
@@ -356,7 +355,7 @@ public:
 		this->updateDt();
 		this->updateInput();
 		if(updateModels)
-			this->boidsLogic->update(this->dt);
+			this->boidsLogic->update(this->dt, this->boidsModel->getPositionBuffer(), this->boidsModel->getVelocityBuffer());
 	}
 
 	// Check if window should close
