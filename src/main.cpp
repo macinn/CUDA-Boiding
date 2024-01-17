@@ -8,6 +8,7 @@ int main()
 	const int GL_VERSION_MINOR = 4;
 
 	uint N, size;
+	std::cout << "Boids simulation, Skrzypczak Marcin" << std::endl;
 	std::cout << "Set container size: ";
 	std::cin >> size;
 	std::cout << "Set number of boids: ";
