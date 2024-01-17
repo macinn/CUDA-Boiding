@@ -165,8 +165,8 @@ class BoidsLogicGPU: public BoidsLogic {
 private:
     glm::vec3* dev_boids_p;
     glm::vec3* dev_boids_v;
-    cudaGraphicsResource* cuda_boids_p;
-    cudaGraphicsResource* cuda_boids_v;
+    cudaGraphicsResource* cuda_boids_p = NULL;
+    cudaGraphicsResource* cuda_boids_v = NULL;
     int* dev_boids_grid_ind_1;
     int* dev_boids_grid_ind_2;
     int* dev_grid_start;
@@ -280,7 +280,7 @@ private:
     }
 
 public:
-	BoidsLogicGPU(uint N, uint width, uint height, uint depth = 0, GLuint positionBuffer, GLuint velocityBuffer) :
+	BoidsLogicGPU(uint N, uint width, uint height, uint depth = 0) :
         BoidsLogic(N, width, height, depth)
 	{
         cudaError_t cudaStatus;
@@ -327,16 +327,6 @@ public:
         gridSize = 2 * visualRange;
         // populate with random values
         this->init();
-
-        cudaStatus = cudaGraphicsGLRegisterBuffer(&cuda_boids_p, positionBuffer, cudaGraphicsRegisterFlagsWriteDiscard);
-        if (cudaStatus != cudaSuccess) {
-            throw std::runtime_error("cudaGraphicsGLRegisterBuffer failed!");
-        }
-        cudaStatus = cudaGraphicsGLRegisterBuffer(&cuda_boids_v, velocityBuffer, cudaGraphicsRegisterFlagsWriteDiscard);
-        if (cudaStatus != cudaSuccess) {
-            throw std::runtime_error("cudaGraphicsGLRegisterBuffer failed!");
-        }
-        
 	}
     ~BoidsLogicGPU() {
         cudaFree(dev_boids_v);
@@ -345,14 +335,45 @@ public:
 
     // Update boids position and velocity
     void update(float dt, GLuint positionBuffer, GLuint velocityBuffer) {
+        cudaError_t cudaStatus;
+
+        if (cuda_boids_p == NULL)
+        {
+            cudaStatus = cudaGraphicsGLRegisterBuffer(&cuda_boids_p, positionBuffer, cudaGraphicsRegisterFlagsWriteDiscard);
+            if (cudaStatus != cudaSuccess) {
+                throw std::runtime_error("cudaGraphicsGLRegisterBuffer failed!");
+            }
+        }
+        if (cuda_boids_v == NULL)
+        {
+            cudaStatus = cudaGraphicsGLRegisterBuffer(&cuda_boids_v, velocityBuffer, cudaGraphicsRegisterFlagsWriteDiscard);
+            if (cudaStatus != cudaSuccess) {
+                throw std::runtime_error("cudaGraphicsGLRegisterBuffer failed!");
+            }
+		}
         size_t size = N * sizeof(glm::vec3);
         assignGridInd();
         sortGrid();
-        cudaGraphicsResourceGetMappedPointer((void**)&dev_boids_p, &size, cuda_boids_p);
-        cudaGraphicsResourceGetMappedPointer((void**)&dev_boids_v, &size, cuda_boids_v);
+
+        cudaStatus = cudaGraphicsResourceGetMappedPointer((void**)&dev_boids_p, &size, cuda_boids_p);
+        if (cudaStatus != cudaSuccess) {
+            throw std::runtime_error("cudaGraphicsResourceGetMappedPointer failed!");
+        }
+        cudaStatus = cudaGraphicsResourceGetMappedPointer((void**)&dev_boids_v, &size, cuda_boids_v);
+        if (cudaStatus != cudaSuccess) {
+            throw std::runtime_error("cudaGraphicsResourceGetMappedPointer failed!");
+        }
+
         updateData(dt);
-        cudaGraphicsUnmapResources(1, &cuda_boids_p, 0);
-        cudaGraphicsUnmapResources(1, &cuda_boids_v, 0);
+
+        cudaStatus = cudaGraphicsUnmapResources(1, &cuda_boids_p, 0);
+        if (cudaStatus != cudaSuccess) {
+            throw std::runtime_error("cudaGraphicsUnmapResources failed!");
+        }
+        cudaStatus = cudaGraphicsUnmapResources(1, &cuda_boids_v, 0);
+        if (cudaStatus != cudaSuccess) {
+            throw std::runtime_error("cudaGraphicsUnmapResources failed!");
+        }
         //updateBuffers(positionBuffer, velocityBuffer);
     }
 };
