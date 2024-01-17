@@ -1,6 +1,7 @@
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
+#include <iostream>
 
 #pragma once
 
@@ -18,7 +19,7 @@ private:
 	glm::vec3 right;
 	glm::vec3 up;
 
-	// Euler angles
+	// Rotation angles
 	GLfloat rotationX;
 	GLfloat rotationY;
 	GLfloat rotationZ;
@@ -54,7 +55,7 @@ public:
 		this->up = worldUp;
 
 		this->rotationX = 0.f;
-		this->rotationZ = 0.f;
+		this->rotationZ = -90.f;
 		this->rotationY = 0.f;
 
 		this->updateCameraVectors();
@@ -104,14 +105,13 @@ public:
 	// Update rotation
 	void updateMouseInput(const float& dt, const double& offsetX, const double& offsetY)
 	{
-		this->rotationX += (GLfloat)offsetY * this->sensitivity * dt;
-		this->rotationZ += (GLfloat)offsetX * this->sensitivity * dt;
+		this->rotationX += static_cast<GLfloat>(offsetY) * this->sensitivity * dt;
+		this->rotationZ += static_cast<GLfloat>(offsetX) * this->sensitivity * dt;
 
 		if (this->rotationX > 80.f)
 			this->rotationX = 80.f;
 		else if (this->rotationX < -80.f)
 			this->rotationX = -80.f;
-
 		if (this->rotationZ > 360.f || this->rotationZ < -360.f)
 			this->rotationZ = 0.f;
 	}

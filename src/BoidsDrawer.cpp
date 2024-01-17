@@ -122,7 +122,7 @@ private:
 
 		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 
-		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+		// glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	}
 
 	// Initialize view and projection matrices
@@ -132,7 +132,7 @@ private:
 
 		this->ProjectionMatrix = glm::perspective(
 			glm::radians(this->fov),
-			(float)(this->framebufferWidth) / this->framebufferHeight,
+			static_cast<float>(this->framebufferWidth) / this->framebufferHeight,
 			this->nearPlane,
 			this->farPlane
 		);
@@ -229,8 +229,6 @@ private:
 				this->lastMouseY = this->mouseY;
 			}
 		}
-
-
 	}
 
 	// Update delta time
@@ -283,6 +281,7 @@ private:
 		ImGui::Begin("Settings");
 		ImGui::Text("Press SPACE to enable/disable mouse.");
 		ImGui::Text("Press ESC to close window.");
+
 		//ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
 		ImGui::InputFloat("turnFactor", &this->boidsLogic->turnFactor, 0.0f, 1.0f);
 		ImGui::InputFloat("visualRange", &this->boidsLogic->visualRange, 0.0f, 1.0f);
@@ -297,7 +296,6 @@ private:
 		ImGui::InputFloat("sensitivity", &this->camera->sensitivity, 0.0f, 1.0f);
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 		ImGui::End();
-
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

@@ -2,7 +2,7 @@
 # and include sub-projects here.
 #
 cmake_minimum_required (VERSION 3.8)
-project (opengl-cmake)
+project (shoal-of-fish)
 
 find_package(OpenGL REQUIRED)
 
@@ -27,8 +27,8 @@ lib/imgui/backends/imgui_impl_opengl3.cpp
 )
 
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
-add_executable(opengl-cmake ${MY_SOURCES} ${IMGUI_SOURCES})
-target_compile_options(opengl-cmake PRIVATE -Wall)
+add_executable(shoal-of-fish ${MY_SOURCES} ${IMGUI_SOURCES})
+target_compile_options(shoal-of-fish PRIVATE -Wall)
 
 file(COPY src/shaders DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
 
@@ -37,18 +37,16 @@ add_definitions(-DGLEW_STATIC)
 add_subdirectory(lib/glfw EXCLUDE_FROM_ALL)
 add_subdirectory(lib/glew EXCLUDE_FROM_ALL)
 add_subdirectory(lib/glm EXCLUDE_FROM_ALL)
-add_subdirectory(lib/SOIL2 EXCLUDE_FROM_ALL)
 
-target_include_directories(opengl-cmake PRIVATE lib/imgui)
+target_include_directories(shoal-of-fish PRIVATE lib/imgui)
 
-target_link_libraries(opengl-cmake
+target_link_libraries(shoal-of-fish
   PRIVATE glfw
   PRIVATE libglew_static
   PRIVATE glm
-  PRIVATE soil2
 )
 
-target_include_directories(opengl-cmake
+target_include_directories(shoal-of-fish
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
   PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src
 )

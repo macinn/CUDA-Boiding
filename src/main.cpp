@@ -20,7 +20,7 @@ int main()
 		GL_VERSION_MAJOR, GL_VERSION_MINOR,
 		false, N, size);
 
-	// Main program loop
+	// Main program	loop
 	while (!drawer.getWindowShouldClose())
 	{
 		drawer.update();
