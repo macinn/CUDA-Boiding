@@ -3,6 +3,7 @@
 
 #pragma once
 
+// Structure of vertex with normal vector and position
 struct Vertex
 {
 	glm::vec3 position;
@@ -12,35 +13,25 @@ struct Vertex
 class BoidsModel
 {
 private:
+	// OpenGL buffers, same for every instance
 	GLuint VAO, VBO, EBO;
+	// OpenGL buffers, instance specific
 	GLuint instancePosition;
 	GLuint instanceVelocity;
 
+	// Vertices and indices
 	Vertex* vertices;
 	GLuint* indices;
 	const unsigned int noVerticies = BOID_NO_VERTICES;
 	const unsigned int noIndicies = BOID_NO_INDICES;
-
+	
+	// IInstance specific data pointers
 	glm::vec3* positions;
 	glm::vec3* velocities;
+	// Number of boids
 	const unsigned int N;
-public:
-	BoidsModel(unsigned N, glm::vec3* positions, glm::vec3* velocities) :N(N), positions(positions), velocities(velocities)
-	{
-		vertices = new Vertex[noVerticies]{ BOID_VERTICES };
-		indices = new GLuint[noIndicies]{ BOID_INDICES };
-	}
-	~BoidsModel()
-	{
-		delete[] vertices;
-		delete[] indices;
 
-		glDeleteVertexArrays(1, &this->VAO);
-		glDeleteVertexArrays(1, &this->instancePosition);
-		glDeleteVertexArrays(1, &this->instanceVelocity);
-		glDeleteBuffers(1, &this->VBO);
-		glDeleteBuffers(1, &this->EBO);
-	}
+	// Initialize buffers
 	void initBuffers()
 	{
 		// VAO
@@ -77,14 +68,35 @@ public:
 		glEnableVertexAttribArray(3);
 		glVertexAttribDivisor(3, 1);
 	}
+
+	// Update instance specific data on GPU
 	void updateInstancedVBO()
 	{
 		glNamedBufferSubData(instancePosition, 0, this->N * sizeof(glm::vec3), this->positions);
 		glNamedBufferSubData(instanceVelocity, 0, this->N * sizeof(glm::vec3), this->velocities);
 	}
+public:
+	// Constructor and destructor
+	BoidsModel(unsigned N, glm::vec3* positions, glm::vec3* velocities) :N(N), positions(positions), velocities(velocities)
+	{
+		vertices = new Vertex[noVerticies]{ BOID_VERTICES };
+		indices = new GLuint[noIndicies]{ BOID_INDICES };
+		this->initBuffers();
+	}
+	~BoidsModel()
+	{
+		delete[] vertices;
+		delete[] indices;
+		glDeleteVertexArrays(1, &this->VAO);
+		glDeleteVertexArrays(1, &this->instancePosition);
+		glDeleteVertexArrays(1, &this->instanceVelocity);
+		glDeleteBuffers(1, &this->VBO);
+		glDeleteBuffers(1, &this->EBO);
+	}
+
+	// Render boids using given shader
 	void render(Shader* shader)
 	{
-		// update 
 		shader->use();
 		glBindVertexArray(VAO);
 		updateInstancedVBO();
@@ -92,10 +104,13 @@ public:
 		glBindVertexArray(0);
 
 	}
+
+	// Setters
 	void setPositions(glm::vec3* positions)
 	{
 		this->positions = positions;
 	}
+
 	void setVelocities(glm::vec3* velocities)
 	{
 		this->velocities = velocities;

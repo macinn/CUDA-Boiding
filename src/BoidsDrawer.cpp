@@ -1,49 +1,49 @@
 #include "BoidsLogic.cpp"
 #include "BoidsModel.cpp"
 #include "Camera.cpp"
-#include "Box.cpp"
+#include "BoxModel.cpp"
 
 #include "backends/imgui_impl_opengl3.h"
 #include "backends/imgui_impl_glfw.h"
 
 #pragma once
 
-// TODO: destructor
+// Main drawer class
 class BoidsDrawer
 {
 private:
+	// OpenGL window paremeters
 	GLFWwindow* window;
 	const int WINDOW_WIDTH;
 	const int WINDOW_HEIGHT;
 	int framebufferWidth;
 	int framebufferHeight;
-
-	Shader* shader;
-	Shader* boxShader;
-
-	//OpenGL Context
 	const int GL_VERSION_MAJOR;
 	const int GL_VERSION_MINOR;
+	
+	// Models and shaders
+	Shader* boidsShader;
+	BoidsModel* boidsModel;
+	Shader* boxShader;
+	BoxModel* boxModel;
 
-	//Camera
+	// Boids logic
+	BoidsLogic* boidsLogic;
+
+	// Camera
 	Camera* camera;
+	const float fov = 90.f;
+	const float nearPlane = 0.1f;
+	const float farPlane = 1000.f;
 
-	//Matrices
+	// Matrices
 	glm::mat4 ViewMatrix;
 	glm::vec3 camPosition;
 	glm::vec3 worldUp;
 	glm::vec3 camFront;
 	glm::mat4 ProjectionMatrix;
 
-	float fov;
-	float nearPlane;
-	float farPlane;
-
-	//Model
-	BoidsModel* boidsModel;
-	BoidsLogic* boidsLogic;
-	Box* box;
-
+	// Delta time
 	float dt = 0.f;
 	float curTime = glfwGetTime();
 	float lastTime = curTime;
@@ -58,25 +58,7 @@ private:
 	bool firstMouse;
 	bool spacePressed = false;
 
-public:
-	~BoidsDrawer()
-	{
-		glfwDestroyWindow(this->window);
-		glfwTerminate();
-
-		delete this->shader;
-		delete this->boxShader;
-		delete this->camera;
-		delete this->boidsModel;
-		delete this->boidsLogic;
-		delete this->box;
-	}
-
-	static void framebuffer_resize_callback(GLFWwindow* window, int fbW, int fbH)
-	{
-		glViewport(0, 0, fbW, fbH);
-	}
-
+	// Create window
 	void initWindow(const char* title, bool resizable)
 	{
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -99,6 +81,13 @@ public:
 		glfwMakeContextCurrent(this->window);
 	}
 
+	// Window resize callback
+	static void framebuffer_resize_callback(GLFWwindow* window, int fbW, int fbH)
+	{
+		glViewport(0, 0, fbW, fbH);
+	}
+
+	// Initialize GLFW
 	void initGLFW()
 	{
 		if (glfwInit() == GLFW_FALSE)
@@ -108,6 +97,7 @@ public:
 		}
 	}
 
+	// Initialize GLEW
 	void initGLEW()
 	{
 		glewExperimental = GL_TRUE;
@@ -119,10 +109,10 @@ public:
 		}
 	}
 
+	// Initialize standard OpenGL options
 	void initOpenGLOptions()
 	{
 		glEnable(GL_DEPTH_TEST);
-
 		glEnable(GL_CULL_FACE);
 		glCullFace(GL_BACK);
 		glFrontFace(GL_CCW);
@@ -135,87 +125,54 @@ public:
 		glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 	}
 
+	// Initialize view and projection matrices
 	void initMatrices()
 	{
-		this->ViewMatrix = glm::mat4(1.f);
 		this->ViewMatrix = glm::lookAt(this->camPosition, this->camPosition + this->camFront, this->worldUp);
 
-		this->ProjectionMatrix = glm::mat4(1.f);
 		this->ProjectionMatrix = glm::perspective(
 			glm::radians(this->fov),
-			static_cast<float>(this->framebufferWidth) / this->framebufferHeight,
+			(float)(this->framebufferWidth) / this->framebufferHeight,
 			this->nearPlane,
 			this->farPlane
 		);
 	}
 
+	// Initialize shaders
 	void initShaders()
 	{
-		// TODO: change version inside of shader
-		this->shader = new Shader("shaders/boids/vertex_core.glsl", "shaders/boids/fragment_core.glsl");
+		this->boidsShader = new Shader("shaders/boids/vertex_core.glsl", "shaders/boids/fragment_core.glsl");
 		this->boxShader = new Shader("shaders/box/vertex_box.glsl", "shaders/box/fragment_box.glsl");
 	}
 
-	void initLight()
-	{
-		this->shader->setVec3f(this->camPosition, "lightPos0");
-	}
-
+	// Initialize viewMatrix, projectionMatrix and light
 	void initUniforms()
 	{
-		//INIT UNIFORMS
-		this->shader->setMat4fv(ViewMatrix, "ViewMatrix");
-		this->shader->setMat4fv(ProjectionMatrix, "ProjectionMatrix");
-		glm::mat4 ModelMatrix(1.f);
-		this->shader->setMat4fv(ModelMatrix, "ModelMatrix");
-		this->initLight();
+		this->boidsShader->setMat4fv(ViewMatrix, "ViewMatrix");
+		this->boidsShader->setMat4fv(ProjectionMatrix, "ProjectionMatrix");
+		this->boidsShader->setVec3f(this->camPosition, "lightPos0");
 	}
 
-	BoidsDrawer(const char* title,
-		const int WINDOW_WIDTH, const int WINDOW_HEIGHT,
-		const int GL_VERSION_MAJOR, const int GL_VERSION_MINOR,
-		bool resizable, uint N, uint size
-		) :WINDOW_WIDTH(WINDOW_WIDTH),
-		WINDOW_HEIGHT(WINDOW_HEIGHT),
-		GL_VERSION_MAJOR(GL_VERSION_MAJOR),
-		GL_VERSION_MINOR(GL_VERSION_MINOR)
+	// Update camera based on user input
+	void updateInput()
 	{
-		//Init variables
-		this->window = nullptr;
-		this->framebufferWidth = this->WINDOW_WIDTH;
-		this->framebufferHeight = this->WINDOW_HEIGHT;
+		glfwPollEvents();
 
-		this->camPosition = glm::vec3(15.f, 15.f, 50.f);
-		this->worldUp = glm::vec3(0.f, 1.f, 0.f);
-		this->camFront = glm::vec3(0.f, 0.f, -1.f);
-		camera = new Camera(this->camPosition, this->camFront, this->worldUp);
-
-		this->fov = 90.f;
-		this->nearPlane = 0.1f;
-		this->farPlane = 1000.f;
-
-		this->initGLFW();
-		this->initWindow(title, resizable);
-		this->initGLEW();
-		this->initOpenGLOptions();
-
-		this->initShaders();
-		this->initMatrices();
-		this->initUniforms();
-		this->initModel(N, size);
-
-		this->initImgui();
+		this->updateKeyboardInput();
+		this->updateMouseInput();
+		this->camera->updateMouseInput(dt, this->mouseOffsetX, this->mouseOffsetY);
 	}
 
+	// Update keyes pressed
 	void updateKeyboardInput()
 	{
-		//Program
+		// Close window on ESC
 		if (glfwGetKey(this->window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
 		{
 			glfwSetWindowShouldClose(this->window, GLFW_TRUE);
 		}
 
-		//Camera
+		// Move camera
 		if (glfwGetKey(this->window, GLFW_KEY_W) == GLFW_PRESS)
 		{
 			this->camera->updateKeyboardInput(this->dt, FORWARD);
@@ -233,18 +190,11 @@ public:
 			this->camera->updateKeyboardInput(this->dt, RIGHT);
 		}
 	}
-	
-	void updateInput()
-	{
-		glfwPollEvents();
 
-		this->updateKeyboardInput();
-		this->updateMouseInput();
-		this->camera->updateMouseInput(dt, this->mouseOffsetX, this->mouseOffsetY);
-	}
-
+	// Update mouse input
 	void updateMouseInput()
 	{
+		// So we count space press only once
 		int spaceState = glfwGetKey(window, GLFW_KEY_SPACE);
 
 		if (spaceState == GLFW_PRESS && !spacePressed)
@@ -256,9 +206,9 @@ public:
 				this->firstMouse = true;
 			}
 			else
-				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);	
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 		}
-		else if(spaceState == GLFW_RELEASE)
+		else if (spaceState == GLFW_RELEASE)
 		{
 			spacePressed = false;
 			if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_DISABLED)
@@ -280,20 +230,10 @@ public:
 			}
 		}
 
-		
+
 	}
 
-	void update()
-	{
-		this->updateDt();
-		this->updateInput();
-
-		this->boidsLogic->update(this->dt);
-		//this->model->setPositions(this->flock->boids_p);
-		//this->model->setVelocities(this->flock->boids_v);
-		this->boidsModel->updateInstancedVBO();
-	}
-
+	// Update delta time
 	void updateDt()
 	{
 		this->curTime = static_cast<float>(glfwGetTime());
@@ -301,29 +241,18 @@ public:
 		this->lastTime = this->curTime;
 	}
 
-	void initModel(uint N, uint size)
+	// Initialize boids and box models
+	void initModels(uint N, uint size)
 	{
 		this->boidsLogic = new BoidsLogic(N, size, size, size);
-		this->boidsLogic->init();
 
-		this->boidsModel = new BoidsModel(N, 
+		this->boidsModel = new BoidsModel(N,
 			this->boidsLogic->boids_p, this->boidsLogic->boids_v);
-		this->boidsModel->initBuffers();
 
-		this->box = new Box(size, size, size);
-		this->box->initBuffers();
+		this->boxModel = new BoxModel(size, size, size);
 	}
 
-	int getWindowShouldClose()
-	{
-		return glfwWindowShouldClose(this->window);
-	}
-
-	void setWindowShouldClose()
-	{
-		glfwSetWindowShouldClose(this->window, GLFW_TRUE);
-	}
-	
+	// Initialize user interface
 	void initImgui()
 	{
 		// Setup Dear ImGui context
@@ -341,6 +270,7 @@ public:
 		ImGui_ImplOpenGL3_Init("#version 330");
 	}
 
+	// Render user interface
 	void renderImgui()
 	{
 		// Start the Dear ImGui frame
@@ -350,7 +280,7 @@ public:
 
 		ImGuiIO& io = ImGui::GetIO();
 
-		ImGui::Begin("Settings"); 
+		ImGui::Begin("Settings");
 		ImGui::Text("Press SPACE to enable/disable mouse.");
 		ImGui::Text("Press ESC to close window.");
 		//ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
@@ -367,19 +297,90 @@ public:
 		ImGui::InputFloat("sensitivity", &this->camera->sensitivity, 0.0f, 1.0f);
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 		ImGui::End();
-		
+
 
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
+public:
+	// Constructor and destructor
+	BoidsDrawer(const char* title,
+		const int WINDOW_WIDTH, const int WINDOW_HEIGHT,
+		const int GL_VERSION_MAJOR, const int GL_VERSION_MINOR,
+		bool resizable, uint N, uint size
+	) :WINDOW_WIDTH(WINDOW_WIDTH),
+		WINDOW_HEIGHT(WINDOW_HEIGHT),
+		GL_VERSION_MAJOR(GL_VERSION_MAJOR),
+		GL_VERSION_MINOR(GL_VERSION_MINOR)
+	{
+		this->window = nullptr;
+		this->framebufferWidth = this->WINDOW_WIDTH;
+		this->framebufferHeight = this->WINDOW_HEIGHT;
 
+		this->camPosition = glm::vec3( size / 2, size / 2, 2 * size);
+		this->worldUp = glm::vec3(0.f, 1.f, 0.f);
+		this->camFront = glm::vec3(0.f, 0.f, -1.f);
+
+		camera = new Camera(this->camPosition, this->camFront, this->worldUp);
+
+		this->initGLFW();
+		this->initWindow(title, resizable);
+		this->initGLEW();
+		this->initOpenGLOptions();
+
+		this->initShaders();
+		this->initMatrices();
+		this->initUniforms();
+		this->initModels(N, size);
+
+		this->initImgui();
+	}
+	~BoidsDrawer()
+	{
+		glfwDestroyWindow(this->window);
+		glfwTerminate();
+
+		delete this->boidsShader;
+		delete this->boxShader;
+		delete this->camera;
+		delete this->boidsModel;
+		delete this->boidsLogic;
+		delete this->boxModel;
+	}
+
+	// Update objects
+	void update()
+	{
+		this->updateDt();
+		this->updateInput();
+		this->boidsLogic->update(this->dt);
+	}
+
+	// Check if window should close
+	int getWindowShouldClose()
+	{
+		return glfwWindowShouldClose(this->window);
+	}
+
+	// Set window should close
+	void setWindowShouldClose()
+	{
+		glfwSetWindowShouldClose(this->window, GLFW_TRUE);
+	}
+	
+	// Update uniforms
 	void updateUniforms()
 	{
 		this->ViewMatrix = this->camera->getViewMatrix();
-		this->shader->setVec3f(this->camera->getPosition(), "lightPos0");
-		this->shader->setMat4fv(this->ViewMatrix, "ViewMatrix");
+		
+		// Update light position to camera position
+		this->boidsShader->setVec3f(this->camera->getPosition(), "lightPos0");
+
+		// Update view matrix
+		this->boidsShader->setMat4fv(this->ViewMatrix, "ViewMatrix");
 		this->boxShader->setMat4fv(this->ViewMatrix, "ViewMatrix");
 
+		// Update projection matrix, if window is not minimized
 		glfwGetFramebufferSize(this->window, &this->framebufferWidth, &this->framebufferHeight);
 		if (this->framebufferHeight != 0)
 		{
@@ -389,37 +390,32 @@ public:
 				this->nearPlane,
 				this->farPlane
 			);
-			this->shader->setMat4fv(this->ProjectionMatrix, "ProjectionMatrix");
+			this->boidsShader->setMat4fv(this->ProjectionMatrix, "ProjectionMatrix");
 			this->boxShader->setMat4fv(this->ProjectionMatrix, "ProjectionMatrix");
 		}
-
-		this->shader->setVec3f(this->camera->getPosition(), "cameraPos");
 	}
 
+	// Render new frame
 	void render()
 	{
-		//DRAW ---
-		//Clear
-		// sky blue
+		// Background color: sky blue
 		//glClearColor(0.53f, 0.81f, 0.92f, 1.f);
-		// dark blue
-
+		// 
+		// Background color: dark blue
 		glClearColor(0.f, 0.1f, 0.2f, 1.f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT | GL_STENCIL_BUFFER_BIT);
 		renderImgui();
 
-		//Update the uniforms
+		// Update the uniforms
 		this->updateUniforms();
-		//Update the model
 
-		this->boidsModel->render(this->shader);
-		this->box->render(this->boxShader);
-
-		
-		//End Draw
+		// Render models
+		this->boidsModel->render(this->boidsShader);
+		this->boxModel->render(this->boxShader);
+	
+		// End Draw
 		glfwSwapBuffers(window);
 		glFlush();
-
 		glBindVertexArray(0);
 		glUseProgram(0);
 	}

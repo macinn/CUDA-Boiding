@@ -1,5 +1,6 @@
 #version 440
 #define eps 1e-12
+# define PI 3.1415926535897932384626433832795
 
 layout(location = 0) in vec3 vertex_position;
 layout(location = 1) in vec3 vertex_normal;
@@ -14,6 +15,7 @@ out vec3 vs_normal;
 uniform mat4 ViewMatrix;
 uniform mat4 ProjectionMatrix;
 
+// Create translation matrix
 mat4 translate(vec3 translation) {
     return mat4(
         vec4(1.0, 0.0, 0.0, 0.0),
@@ -22,6 +24,8 @@ mat4 translate(vec3 translation) {
         vec4(translation, 1.0)
     );
 }
+
+// Create rotation from axis and angle
 mat4 rotation3d(vec3 axis, float angle) {
     axis = normalize(axis);
     float s = -sin(angle);
@@ -35,6 +39,8 @@ mat4 rotation3d(vec3 axis, float angle) {
         0.0, 0.0, 0.0, 1.0
     );
 }
+
+// Create rotation matrix from target vector
 mat4 createRotationMatrix(vec3 targetVector) {
     if (length(targetVector) < eps) {
 		return mat4(1.0);
@@ -45,7 +51,7 @@ mat4 createRotationMatrix(vec3 targetVector) {
         if (normalizedTarget.y >= 0.0)
             return mat4(1.0);
         else
-            return rotation3d(vec3(1.0, 0.0, 0.0), 3.1415926 );
+            return rotation3d(vec3(1.0, 0.0, 0.0), PI);
     }
 	float dotProductValue = dot(vec3(0.0, 1.0, 0.0), normalizedTarget);
 	float angle = acos(dotProductValue);
@@ -55,9 +61,12 @@ mat4 createRotationMatrix(vec3 targetVector) {
 void main()
 {
     mat4 ModelMatrix = translate(vertex_offset) * createRotationMatrix(vertex_velocity);
+
     vs_position = vec4(ModelMatrix * vec4(vertex_position, 1.f)).xyz;
-	vs_color = vec3(0.f, 1.f, 0.f);
 	vs_normal = mat3(ModelMatrix) * vertex_normal;
+    
+    // Set color to green
+	vs_color = vec3(0.f, 1.f, 0.f);
 
     gl_Position = ProjectionMatrix * ViewMatrix * ModelMatrix * vec4(vertex_position, 1.f);
 
