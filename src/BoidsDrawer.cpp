@@ -20,6 +20,7 @@ private:
 	int framebufferHeight;
 	const int GL_VERSION_MAJOR;
 	const int GL_VERSION_MINOR;
+	bool updateModels = true;
 	
 	// Models and shaders
 	Shader* boidsShader;
@@ -282,7 +283,10 @@ private:
 		ImGui::Text("Press SPACE to enable/disable mouse.");
 		ImGui::Text("Press ESC to close window.");
 
-		//ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+		if (ImGui::Button("Stop animation"))
+		{
+			this->updateModels = !this->updateModels;
+		}
 		ImGui::InputFloat("turnFactor", &this->boidsLogic->turnFactor, 0.0f, 1.0f);
 		ImGui::InputFloat("visualRange", &this->boidsLogic->visualRange, 0.0f, 1.0f);
 		ImGui::InputFloat("protectedRange", &this->boidsLogic->protectedRange, 0.0f, 1.0f);
@@ -351,7 +355,8 @@ public:
 	{
 		this->updateDt();
 		this->updateInput();
-		this->boidsLogic->update(this->dt);
+		if(updateModels)
+			this->boidsLogic->update(this->dt);
 	}
 
 	// Check if window should close
