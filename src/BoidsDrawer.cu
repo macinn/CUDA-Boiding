@@ -245,9 +245,7 @@ private:
 	void initModels(uint N, uint size)
 	{
 		this->boidsModel = new BoidsModel(N);
-
-		this->boidsLogic = new BoidsLogicGPU(N, size, size, size, this->boidsModel->getPositionBuffer(), this->boidsModel->getVelocityBuffer());
-
+		// this->boidsLogic = new BoidsLogicGPU(N, size, size, size, this->boidsModel->getPositionBuffer(), this->boidsModel->getVelocityBuffer());
 		this->boxModel = new BoxModel(size, size, size);
 	}
 
@@ -396,6 +394,26 @@ public:
 			this->boidsShader->setMat4fv(this->ProjectionMatrix, "ProjectionMatrix");
 			this->boxShader->setMat4fv(this->ProjectionMatrix, "ProjectionMatrix");
 		}
+	}
+
+	// Set boids logic class
+	void setBoidsLogic(BoidsLogic* boidsLogic)
+	{
+		if(this->boidsLogic)
+			delete this->boidsLogic;
+		this->boidsLogic = boidsLogic;
+	}
+
+	// Get boids position buffer
+	GLuint getPositionBuffer()
+	{
+		return this->boidsModel->getPositionBuffer();
+	}
+
+	// Get boids velocity buffer
+	GLuint getVelocityBuffer()
+	{
+		return this->boidsModel->getVelocityBuffer();
 	}
 
 	// Render new frame

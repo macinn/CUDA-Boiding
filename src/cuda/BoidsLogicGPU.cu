@@ -16,7 +16,23 @@
 
 #pragma once
 
-__global__ void assignGridIndKernel(double gridSize, int gridSizeX, int gridSizeY, uint N, glm::vec3* dev_boids_p, int* dev_boids_grid_ind_1, int* dev_boids_grid_ind_2)
+__device__ int clamp(int min, int x, int max)
+{
+    return x < min ? min : (x > max ? max : x);
+}
+
+__device__ float distance2(glm::vec3 a, glm::vec3 b) {
+    return (a.x - b.x) * (a.x - b.x)
+        + (a.y - b.y) * (a.y - b.y)
+        + (a.z - b.z) * (a.z - b.z);
+}
+
+__device__ float l2Norm(glm::vec3 a) {
+    return sqrtf(a.x * a.x + a.y * a.y + a.z * a.z);
+}
+
+__global__ void assignGridIndKernel(double gridSize, int gridSizeX, int gridSizeY, int gridSizeZ,
+    uint N, glm::vec3* dev_boids_p, int* dev_boids_grid_ind_1, int* dev_boids_grid_ind_2)
 {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
     while (idx < N)
@@ -25,28 +41,21 @@ __global__ void assignGridIndKernel(double gridSize, int gridSizeX, int gridSize
         int y = dev_boids_p[idx].y / gridSize;
         int z = dev_boids_p[idx].z / gridSize;
 
+        x = clamp(0, x, gridSizeX - 1);
+        y = clamp(0, y, gridSizeY - 1);
+        z = clamp(0, z, gridSizeZ - 1);
+
         dev_boids_grid_ind_1[idx] = x + y * gridSizeX + z * gridSizeX * gridSizeY;
         dev_boids_grid_ind_2[idx] = dev_boids_grid_ind_1[idx];
 
         idx += BLOCK_SIZE * BLOCK_NUMBER;
     }
-
-}
-
-__device__ float distance2(glm::vec3 a, glm::vec3 b) {
-    return (a.x - b.x) * (a.x - b.x)
-		+ (a.y - b.y) * (a.y - b.y)
-		+ (a.z - b.z) * (a.z - b.z);
-}
-
-__device__ float l2Norm(glm::vec3 a) {
-    return sqrtf(a.x * a.x + a.y * a.y + a.z * a.z);
 }
 
 __global__ void updateBoidsKernel(const float dt, const uint N, 
     glm::vec3* dev_boids_p, glm::vec3* dev_boids_v, 
     const int* dev_boids_grid_ind, const int* dev_grid_start, const int* dev_grid_end,
-    const int gridSizeX, const int gridSizeY,
+    const int gridSizeX, const int gridSizeY, const int gridSizeZ,
     const float turnFactor, const float visualRange, const float protectedRange,
     const float centeringFactor, float avoidFactor, float matchingFactor,
     const float maxSpeed, const float minSpeed,
@@ -64,10 +73,14 @@ __global__ void updateBoidsKernel(const float dt, const uint N,
         glm::vec3 vel = glm::vec3(0.0f);
         glm::vec3 center = glm::vec3(0.0f);
         glm::vec3 close = glm::vec3(0.0f);
-        // TODO: more precise boundires
-        for(int i_x = -1; i_x <= 1; i_x ++)
-            for(int i_y = -1; i_y <= 1; i_y++)
-                for (int i_z = -1; i_z <= 1; i_z++)
+
+        int ind_x = current_grid_id % gridSizeX;
+        int ind_y = (current_grid_id / gridSizeX) % gridSizeY;
+        int ind_z = current_grid_id / (gridSizeX * gridSizeY);
+
+        for (int i_x = -(ind_x > 0); i_x <= (ind_x < gridSizeX); i_x++)
+            for (int i_y = -(ind_y > 0); i_y <= (ind_y < gridSizeY); i_y++)
+                for (int i_z = -(ind_z > 0); i_z <= (ind_z < gridSizeZ); i_z++)
                 {
                     int neighbour_grid_id =
                         +i_x
@@ -145,7 +158,7 @@ __global__ void updateBoidsKernel(const float dt, const uint N,
     }
 }
 
-__global__ void findGridStartEnd(int* dev_grid_start, int* dev_grid_end, int* dev_boids_grid_ind_1, int gridCount)
+__global__ void findGridStartEnd(int* dev_grid_start, int* dev_grid_end, int* dev_boids_grid_ind, int gridCount, uint N)
 {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -154,10 +167,24 @@ __global__ void findGridStartEnd(int* dev_grid_start, int* dev_grid_end, int* de
         dev_grid_start[idx] = gridCount;
         dev_grid_end[idx] = -1;
     }
+    while (idx < N)
+    {
+        if (idx == 0) {
+            dev_grid_start[dev_boids_grid_ind[idx]] = 0;
+        }
+        else if (dev_boids_grid_ind[idx] != dev_boids_grid_ind[idx - 1])
+        {
+            dev_grid_end[dev_boids_grid_ind[idx - 1]] = idx - 1;
+            dev_grid_start[dev_boids_grid_ind[idx]] = idx;
 
-    // TODO: Check if regular find
-    atomicMax(&dev_grid_end[idx], idx);
-    atomicMin(&dev_grid_start[idx], idx);
+            if (idx == N - 1)
+            {
+                dev_grid_end[dev_boids_grid_ind[idx]] = idx;
+            }
+        }
+
+        idx += BLOCK_SIZE * BLOCK_NUMBER;
+    }
 }
 
 class BoidsLogicGPU: public BoidsLogic {
@@ -170,7 +197,8 @@ private:
     int* dev_boids_grid_ind_2;
     int* dev_grid_start;
     int* dev_grid_end;
-    double gridSize; 
+    double gridSize;
+    bool firstRun = true;
 
 
     void init()
@@ -207,12 +235,13 @@ private:
 
         int gridSizeX = (width - 1) / gridSize + 1;
         int gridSizeY = (height - 1) / gridSize + 1;
+        int gridSizeZ = (depth - 1) / gridSize + 1;
 
         updateBoidsKernel << < BLOCK_NUMBER, BLOCK_SIZE >> > (
              dt,  N,
              dev_boids_p,  dev_boids_v,
              dev_boids_grid_ind_1,  dev_grid_start,  dev_grid_end,
-             gridSizeX,  gridSizeY,
+             gridSizeX,  gridSizeY, gridSizeZ,
              turnFactor,  visualRange,  protectedRange,
              centeringFactor,  avoidFactor,  matchingFactor,
              maxSpeed,  minSpeed,
@@ -241,8 +270,9 @@ private:
 
         int gridSizeX = (width - 1) / gridSize + 1;
         int gridSizeY = (height - 1) / gridSize + 1;
+        int gridSizeZ = (depth - 1) / gridSize + 1;
 
-        assignGridIndKernel << < BLOCK_NUMBER, BLOCK_SIZE >> > (this->gridSize, gridSizeX, gridSizeY, this->N, this->dev_boids_p,
+        assignGridIndKernel << < BLOCK_NUMBER, BLOCK_SIZE >> > (this->gridSize, gridSizeX, gridSizeY, gridSizeZ, this->N, this->dev_boids_p,
             dev_boids_grid_ind_1, dev_boids_grid_ind_2);
 
         cudaStatus = cudaGetLastError();
@@ -267,7 +297,7 @@ private:
         int gridSizeY = (height - 1) / gridSize + 1;
         int gridSizeZ = (depth - 1) / gridSize + 1;
         
-        findGridStartEnd << < BLOCK_NUMBER, BLOCK_SIZE >> > (dev_grid_start, dev_grid_end, dev_boids_grid_ind_1, gridSizeX * gridSizeY * gridSizeZ);
+        findGridStartEnd << < BLOCK_NUMBER, BLOCK_SIZE >> > (dev_grid_start, dev_grid_end, dev_boids_grid_ind_1, gridSizeX * gridSizeY * gridSizeZ, N);
 
         cudaStatus = cudaGetLastError();
         if (cudaStatus != cudaSuccess) {
@@ -281,7 +311,7 @@ private:
     }
 
 public:
-	BoidsLogicGPU(uint N, uint width, uint height, uint depth, GLuint positionBuffer, GLuint velocityBuffer) :
+	BoidsLogicGPU(uint N, uint width, uint height, uint depth) :
         BoidsLogic(N, width, height, depth)
 	{
         cudaError_t cudaStatus;
@@ -323,16 +353,7 @@ public:
         gridSize = 2 * visualRange;
 
 
-            cudaStatus = cudaGraphicsGLRegisterBuffer(&cuda_boids_p, positionBuffer, cudaGraphicsRegisterFlagsWriteDiscard);
-            if (cudaStatus != cudaSuccess) {
-                throw std::runtime_error("cudaGraphicsGLRegisterBuffer failed!");
-            }
-        
 
-            cudaStatus = cudaGraphicsGLRegisterBuffer(&cuda_boids_v, velocityBuffer, cudaGraphicsRegisterFlagsWriteDiscard);
-            if (cudaStatus != cudaSuccess) {
-                throw std::runtime_error("cudaGraphicsGLRegisterBuffer failed!");
-            }
         
         // populate with random values
         this->init();
@@ -349,7 +370,21 @@ public:
     // Update boids position and velocity
     void update(float dt, GLuint positionBuffer, GLuint velocityBuffer) {
         cudaError_t cudaStatus;
+        if (firstRun)
+        {
+            firstRun = false;
+            cudaStatus = cudaGraphicsGLRegisterBuffer(&cuda_boids_p, positionBuffer, cudaGraphicsRegisterFlagsWriteDiscard);
+            if (cudaStatus != cudaSuccess) {
+                throw std::runtime_error("cudaGraphicsGLRegisterBuffer failed!");
+            }
 
+
+            cudaStatus = cudaGraphicsGLRegisterBuffer(&cuda_boids_v, velocityBuffer, cudaGraphicsRegisterFlagsWriteDiscard);
+            if (cudaStatus != cudaSuccess) {
+                throw std::runtime_error("cudaGraphicsGLRegisterBuffer failed!");
+            }
+
+        }
         size_t size;
         assignGridInd();
         sortGrid();
