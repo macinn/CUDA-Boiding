@@ -312,35 +312,6 @@ private:
         if (cudaStatus != cudaSuccess) {
             throw std::runtime_error("cudaDeviceSynchronize returned error after launching findGridStartEnd!");
         }
-
-        //int size = 30;
-        //int buffer[100] = {};
-        //cudaMemcpy((void*)buffer, dev_boids_grid_ind_1, size * sizeof(int), cudaMemcpyDeviceToHost);
-
-        // Display the contents
-        //std::cout << "Indicies:\n";
-        //for (int i = 0; i < size; ++i) {
-        //    std::cout << buffer[i] << " ";
-        //}
-        //std::cout << "\n";
-
-        //cudaMemcpy((void*)buffer, dev_grid_start, size * sizeof(int), cudaMemcpyDeviceToHost);
-
-        //// Display the contents
-        //std::cout << "Start:\n";
-        //for (int i = 0; i < size; ++i) {
-        //    std::cout << buffer[i] << " ";
-        //}
-        //std::cout << "\n";
-
-        //cudaMemcpy((void*)buffer, dev_grid_end, size * sizeof(int), cudaMemcpyDeviceToHost);
-
-        //// Display the contents
-        //std::cout << "End:\n";
-        //for (int i = 0; i < size; ++i) {
-        //    std::cout << buffer[i] << " ";
-        //}
-        //std::cout << "\n";
     }
 
 public:
@@ -350,10 +321,7 @@ public:
 	{
         cudaError_t cudaStatus;
 
-        this->gridSize = 1.f * visualRange;
-        this->gridSizeX = (width - 1) / gridSize + 1;
-        this->gridSizeY = (height - 1) / gridSize + 1;
-        this->gridSizeZ = (depth - 1) / gridSize + 1;
+        this->setVisualRange(visualRange);
 
         cudaStatus = cudaSetDevice(0);
         if (cudaStatus != cudaSuccess) {
@@ -483,6 +451,16 @@ public:
             cudaEventDestroy(endEvent);
         }
         ///////////////////////
+    }
+
+    // Set visual range, update grid parameters
+    void setVisualRange(float visualRange) override
+    {
+        this->visualRange = visualRange;
+        this->gridSize = 1.f * visualRange;
+        this->gridSizeX = (width - 1) / gridSize + 1;
+        this->gridSizeY = (height - 1) / gridSize + 1;
+        this->gridSizeZ = (depth - 1) / gridSize + 1;
     }
 };
 

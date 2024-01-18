@@ -2,6 +2,7 @@
 #include <glm/vec3.hpp>
 #include <glm/gtx/norm.hpp>
 #include <random>
+#include <iostream>
 #define uint unsigned int
 
 #pragma once
@@ -157,6 +158,11 @@ public:
 	virtual void update(float dt, GLuint positionBuffer, GLuint velocityBuffer) {
 		updateData(dt);
 		updateBuffers(positionBuffer, velocityBuffer);
+	}
+
+	// Visual range setter
+	virtual void setVisualRange(float visualRange) {
+		this->visualRange = visualRange;
 	}
 };
 

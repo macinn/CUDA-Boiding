@@ -3,9 +3,6 @@
 
 int main()
 {
-	//BoidsLogicGPU logic(1000, 30, 30, 30);
-	//logic.update(0.1f,0,0);
-
 	const int WIDTH = 1920;
 	const int HEIGHT = 1080;
 	const int GL_VERSION_MAJOR = 4;
