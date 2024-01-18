@@ -399,8 +399,6 @@ public:
 	// Set boids logic class
 	void setBoidsLogic(BoidsLogic* boidsLogic)
 	{
-		if(this->boidsLogic)
-			delete this->boidsLogic;
 		this->boidsLogic = boidsLogic;
 	}
 

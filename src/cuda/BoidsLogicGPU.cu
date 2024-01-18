@@ -12,7 +12,7 @@
 #include <stdexcept>
 
 #define BLOCK_SIZE 1024
-#define BLOCK_NUMBER 4
+#define BLOCK_NUMBER 12
 
 #pragma once
 
@@ -73,8 +73,10 @@ __global__ void findGridStartEnd(int* dev_grid_start, int* dev_grid_end, int* de
         }
         else if (dev_boids_grid_ind[idx] != dev_boids_grid_ind[idx - 1])
         {
-            dev_grid_end[dev_boids_grid_ind[idx - 1]] = idx - 1;
-            dev_grid_start[dev_boids_grid_ind[idx]] = idx;
+            // dev_grid_end[dev_boids_grid_ind[idx - 1]] = idx - 1;
+            // dev_grid_start[dev_boids_grid_ind[idx]] = idx;
+            atomicMax(&dev_grid_end[dev_boids_grid_ind[idx - 1]], idx - 1);
+            atomicMin(&dev_grid_start[dev_boids_grid_ind[idx]], idx);
 
             if (idx == N - 1)
             {
@@ -97,12 +99,13 @@ __global__ void updateBoidsKernel(const float dt, const uint N,
     const uint width, const uint height, const uint depth,
     const float marginFactor)
 {
-    float visualRangeSquared = visualRange * visualRange;
-    float protectedRangeSquared = protectedRange * protectedRange;
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
+    const float visualRangeSquared = visualRange * visualRange;
+    const float protectedRangeSquared = protectedRange * protectedRange;
+
     while (idx < N)
     {
-        int current_grid_id = dev_boids_grid_ind[idx];
+        const int current_grid_id = dev_boids_grid_ind[idx];
         uint countVisible = 0;
         uint countClose = 0;
         glm::vec3 vel = glm::vec3(0.0f);
@@ -113,9 +116,9 @@ __global__ void updateBoidsKernel(const float dt, const uint N,
         int ind_y = (current_grid_id / gridSizeX) % gridSizeY;
         int ind_z = current_grid_id / (gridSizeX * gridSizeY);
 
-        for (int i_x = -(ind_x > 0); i_x <= (ind_x < gridSizeX); i_x++)
-            for (int i_y = -(ind_y > 0); i_y <= (ind_y < gridSizeY); i_y++)
-                for (int i_z = -(ind_z > 0); i_z <= (ind_z < gridSizeZ); i_z++)
+        for (int i_x = -(ind_x > 0); i_x <= (ind_x < gridSizeX - 1); i_x++)
+            for (int i_y = -(ind_y > 0); i_y <= (ind_y < gridSizeY - 1); i_y++)
+                for (int i_z = -(ind_z > 0); i_z <= (ind_z < gridSizeZ - 1); i_z++)
                 {
                     int neighbour_grid_id =
                         +i_x
@@ -199,8 +202,8 @@ class BoidsLogicGPU: public BoidsLogic {
 private:
     glm::vec3* dev_boids_p;
     glm::vec3* dev_boids_v;
-    cudaGraphicsResource* cuda_boids_p;
-    cudaGraphicsResource* cuda_boids_v;
+    cudaGraphicsResource* cuda_boids_p = NULL;
+    cudaGraphicsResource* cuda_boids_v = NULL;
     // two index arrays for sorting velocity and position
     int* dev_boids_grid_ind_1;
     int* dev_boids_grid_ind_2;
@@ -209,11 +212,16 @@ private:
     double gridSize;
     bool firstRun = true;
 
+    int gridSizeX;
+    int gridSizeY;
+    int gridSizeZ;
+
     // initialize boids position and velocity
     void init()
     {
         cudaError_t cudaStatus;
 
+        // initialize boids velocity to zero
         cudaStatus = cudaMemset(dev_boids_v, 0, N * sizeof(glm::vec3));
         if (cudaStatus != cudaSuccess) {
             throw std::runtime_error("cudaMemset failed!");
@@ -230,7 +238,7 @@ private:
             boids_p[i] = glm::vec3(w(gen), h(gen), z(gen));
         }
 
-        cudaStatus = cudaMemcpy(dev_boids_v, boids_p, N * sizeof(glm::vec3), cudaMemcpyHostToDevice);
+        cudaStatus = cudaMemcpy(dev_boids_p, boids_p, N * sizeof(glm::vec3), cudaMemcpyHostToDevice);
         if (cudaStatus != cudaSuccess) {
             throw std::runtime_error("cudaMemcpy failed!");
         }
@@ -242,10 +250,6 @@ private:
     void updateData(float dt)
     {
         cudaError_t cudaStatus;
-
-        int gridSizeX = (width - 1) / gridSize + 1;
-        int gridSizeY = (height - 1) / gridSize + 1;
-        int gridSizeZ = (depth - 1) / gridSize + 1;
 
         updateBoidsKernel << < BLOCK_NUMBER, BLOCK_SIZE >> > (
              dt,  N,
@@ -260,6 +264,7 @@ private:
 
         cudaStatus = cudaGetLastError();
         if (cudaStatus != cudaSuccess) {
+            std::cerr << "Error: " << cudaGetErrorString(cudaStatus) << std::endl;
             throw std::runtime_error("updateBoidsKernel failed!");
         }
 
@@ -273,10 +278,6 @@ private:
     void assignGridInd()
     {
         cudaError_t cudaStatus;
-
-        int gridSizeX = (width - 1) / gridSize + 1;
-        int gridSizeY = (height - 1) / gridSize + 1;
-        int gridSizeZ = (depth - 1) / gridSize + 1;
 
         assignGridIndKernel << < BLOCK_NUMBER, BLOCK_SIZE >> > (this->gridSize, gridSizeX, gridSizeY, gridSizeZ, this->N, this->dev_boids_p,
             dev_boids_grid_ind_1, dev_boids_grid_ind_2);
@@ -299,11 +300,7 @@ private:
         thrust::sort_by_key(thrust::device, dev_boids_grid_ind_2, dev_boids_grid_ind_2 + N, dev_boids_p);
 
         cudaError_t cudaStatus;
-
-        int gridSizeX = (width - 1) / gridSize + 1;
-        int gridSizeY = (height - 1) / gridSize + 1;
-        int gridSizeZ = (depth - 1) / gridSize + 1;
-        
+       
         findGridStartEnd << < BLOCK_NUMBER, BLOCK_SIZE >> > (dev_grid_start, dev_grid_end, dev_boids_grid_ind_1, gridSizeX * gridSizeY * gridSizeZ, N);
 
         cudaStatus = cudaGetLastError();
@@ -315,6 +312,35 @@ private:
         if (cudaStatus != cudaSuccess) {
             throw std::runtime_error("cudaDeviceSynchronize returned error after launching findGridStartEnd!");
         }
+
+        //int size = 30;
+        //int buffer[100] = {};
+        //cudaMemcpy((void*)buffer, dev_boids_grid_ind_1, size * sizeof(int), cudaMemcpyDeviceToHost);
+
+        // Display the contents
+        //std::cout << "Indicies:\n";
+        //for (int i = 0; i < size; ++i) {
+        //    std::cout << buffer[i] << " ";
+        //}
+        //std::cout << "\n";
+
+        //cudaMemcpy((void*)buffer, dev_grid_start, size * sizeof(int), cudaMemcpyDeviceToHost);
+
+        //// Display the contents
+        //std::cout << "Start:\n";
+        //for (int i = 0; i < size; ++i) {
+        //    std::cout << buffer[i] << " ";
+        //}
+        //std::cout << "\n";
+
+        //cudaMemcpy((void*)buffer, dev_grid_end, size * sizeof(int), cudaMemcpyDeviceToHost);
+
+        //// Display the contents
+        //std::cout << "End:\n";
+        //for (int i = 0; i < size; ++i) {
+        //    std::cout << buffer[i] << " ";
+        //}
+        //std::cout << "\n";
     }
 
 public:
@@ -323,6 +349,11 @@ public:
         BoidsLogic(N, width, height, depth)
 	{
         cudaError_t cudaStatus;
+
+        this->gridSize = 1.f * visualRange;
+        this->gridSizeX = (width - 1) / gridSize + 1;
+        this->gridSizeY = (height - 1) / gridSize + 1;
+        this->gridSizeZ = (depth - 1) / gridSize + 1;
 
         cudaStatus = cudaSetDevice(0);
         if (cudaStatus != cudaSuccess) {
@@ -349,22 +380,15 @@ public:
             throw std::runtime_error("cudaMalloc failed!");
         }
 
-        cudaStatus = cudaMalloc((void**)&dev_grid_start, N * sizeof(int));
+        cudaStatus = cudaMalloc((void**)&dev_grid_start, gridSizeX * gridSizeY * gridSizeZ * sizeof(int));
         if (cudaStatus != cudaSuccess) {
             throw std::runtime_error("cudaMalloc failed!");
         }
 
-        cudaStatus = cudaMalloc((void**)&dev_grid_end, N * sizeof(int));
+        cudaStatus = cudaMalloc((void**)&dev_grid_end, gridSizeX * gridSizeY * gridSizeZ * sizeof(int));
         if (cudaStatus != cudaSuccess) {
             throw std::runtime_error("cudaMalloc failed!");
         }
-        gridSize = 2 * visualRange;
-
-
-
-        
-        // populate with random values
-        this->init();
 	}
     ~BoidsLogicGPU() {
         cudaFree(dev_boids_v);
@@ -376,13 +400,13 @@ public:
     }
 
     // Update boids position and velocity
-    void update(float dt, GLuint positionBuffer, GLuint velocityBuffer) {
+    void update(float dt, GLuint positionBuffer, GLuint velocityBuffer) override
+    {
         cudaError_t cudaStatus;
-
+        size_t size;
         // map openGL buffer object to cuda resource on first run
         if (firstRun)
         {
-            firstRun = false;
             cudaStatus = cudaGraphicsGLRegisterBuffer(&cuda_boids_p, positionBuffer, cudaGraphicsRegisterFlagsWriteDiscard);
             if (cudaStatus != cudaSuccess) {
                 throw std::runtime_error("cudaGraphicsGLRegisterBuffer failed!");
@@ -394,22 +418,44 @@ public:
             }
         }
 
-        size_t size;
-        assignGridInd();
-        sortGrid();
+        // Measure time
+        cudaEvent_t assignGridIndEvent, sortGridEvent, updateDataEvent, endEvent;
+        cudaEventCreate(&assignGridIndEvent);
+        cudaEventCreate(&sortGridEvent);
+        cudaEventCreate(&updateDataEvent);
+        cudaEventCreate(&endEvent);
+        bool afterFirstLoop = false;
+        /////////////////
 
+        cudaGraphicsMapResources(1, &cuda_boids_p);
         cudaStatus = cudaGraphicsResourceGetMappedPointer((void**)&dev_boids_p, &size, cuda_boids_p);
         if (cudaStatus != cudaSuccess) {
+            std::cerr << "Error mapping: " << cudaGetErrorString(cudaStatus) << std::endl;
             throw std::runtime_error("cudaGraphicsResourceGetMappedPointer failed!");
         }
+        if (firstRun)
+        {
+            this->init();
+        }
+
+        cudaEventRecord(assignGridIndEvent);
+        assignGridInd();
+
+        cudaEventRecord(sortGridEvent);
+        sortGrid();
+
+        cudaGraphicsMapResources(1, &cuda_boids_v);
         cudaStatus = cudaGraphicsResourceGetMappedPointer((void**)&dev_boids_v, &size, cuda_boids_v);
         if (cudaStatus != cudaSuccess) {
+            std::cerr << "Error mapping dev_boids_p: " << cudaGetErrorString(cudaStatus) << std::endl;
             throw std::runtime_error("cudaGraphicsResourceGetMappedPointer failed!");
         }
 
+        cudaEventRecord(updateDataEvent);
         // update boids position and velocity and send back to openGL buffer object
         updateData(dt);
-
+        cudaEventRecord(endEvent);
+        
         cudaStatus = cudaGraphicsUnmapResources(1, &cuda_boids_p, 0);
         if (cudaStatus != cudaSuccess) {
             throw std::runtime_error("cudaGraphicsUnmapResources failed!");
@@ -418,6 +464,25 @@ public:
         if (cudaStatus != cudaSuccess) {
             throw std::runtime_error("cudaGraphicsUnmapResources failed!");
         }
+
+        firstRun = false;
+
+        // Measure time
+        if (false)
+        {
+            float milliseconds = 0;
+            cudaEventElapsedTime(&milliseconds, assignGridIndEvent, sortGridEvent);
+            std::cout << "assignGridInd: " << milliseconds << " ms" << std::endl;
+            cudaEventElapsedTime(&milliseconds, sortGridEvent, updateDataEvent);
+            std::cout << "sortGrid: " << milliseconds << " ms" << std::endl;
+            cudaEventElapsedTime(&milliseconds, updateDataEvent, endEvent);
+            std::cout << "updateData: " << milliseconds << " ms" << std::endl;
+            cudaEventDestroy(assignGridIndEvent);
+            cudaEventDestroy(sortGridEvent);
+            cudaEventDestroy(updateDataEvent);
+            cudaEventDestroy(endEvent);
+        }
+        ///////////////////////
     }
 };
 

@@ -132,9 +132,9 @@ protected:
 public:
 	// Movement parameters
 	float turnFactor = 0.2f;
-	float visualRange = 8.f;
+	float visualRange = 4.f;
 	float protectedRange = 1.f;
-	float centeringFactor = 0.05f;
+	float centeringFactor = 0.03f;
 	float avoidFactor = 0.05f;
 	float matchingFactor = 0.1f;
 	float maxSpeed = 10.f;
@@ -154,7 +154,7 @@ public:
 	}
 
 	// Update boids position and velocity
-	void update(float dt, GLuint positionBuffer, GLuint velocityBuffer) {
+	virtual void update(float dt, GLuint positionBuffer, GLuint velocityBuffer) {
 		updateData(dt);
 		updateBuffers(positionBuffer, velocityBuffer);
 	}
