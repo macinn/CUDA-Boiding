@@ -1,12 +1,14 @@
 ﻿# CMakeList.txt : Top-level CMake project file, do global configuration
 # and include sub-projects here.
 #
-cmake_minimum_required (VERSION 3.11)
+cmake_minimum_required (VERSION 3.8)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 project (shoal-of-fish)
 
 find_package(OpenGL REQUIRED)
 enable_language(CUDA)
 set(CMAKE_CUDA_ARCHITECTURES 52 61 75)
+find_package(Sanitizers)
 
 # Enable Hot Reload for MSVC compilers if supported.
 if (POLICY CMP0141)
@@ -17,13 +19,6 @@ endif()
 set(CMAKE_CXX_STANDARD 17)
 
 #file(GLOB_RECURSE IMGUI_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/lib/imgui-cmake/imgui/*.cpp")
-option(ASAN_ENABLED "Build this target with AddressSanitizer" ON)
-
-if(ASAN_ENABLED)
-    string(REGEX REPLACE "/RTC(su|[1su])" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-    message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}\n")
-    add_compile_options(-fsanitize=address)
-endif()
 
 set(IMGUI_SOURCES
     lib/imgui/imgui.cpp
