@@ -120,8 +120,8 @@ __global__ void updateBoidsKernel(const float dt, const uint N,
             for (int i_y = -(ind_y > 0); i_y <= (ind_y < gridSizeY - 1); i_y++)
                 for (int i_z = -(ind_z > 0); i_z <= (ind_z < gridSizeZ - 1); i_z++)
                 {
-                    int neighbour_grid_id =
-                        +i_x
+                    int neighbour_grid_id = current_grid_id
+                        + i_x
                         + i_y * gridSizeX
                         + i_z * gridSizeX * gridSizeY;
 
