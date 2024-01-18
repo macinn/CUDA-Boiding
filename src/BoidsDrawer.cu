@@ -344,7 +344,7 @@ public:
 		delete this->boxShader;
 		delete this->camera;
 		delete this->boidsModel;
-		// delete this->boidsLogic;
+		delete this->boidsLogic;
 		delete this->boxModel;
 	}
 

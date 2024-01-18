@@ -148,7 +148,7 @@ public:
 		boids_v = new glm::vec3[N]();
 		this->init();
 	}
-	~BoidsLogic() {
+	virtual ~BoidsLogic() {
 		delete[] boids_p;
 		delete[] boids_v;
 	}

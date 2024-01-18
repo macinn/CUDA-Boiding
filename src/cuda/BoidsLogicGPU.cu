@@ -16,21 +16,25 @@
 
 #pragma once
 
+// returns std::max(std::min(x, max), min)
 __device__ int clamp(int min, int x, int max)
 {
     return x < min ? min : (x > max ? max : x);
 }
 
+// calculates the squared distance between two points
 __device__ float distance2(glm::vec3 a, glm::vec3 b) {
     return (a.x - b.x) * (a.x - b.x)
         + (a.y - b.y) * (a.y - b.y)
         + (a.z - b.z) * (a.z - b.z);
 }
 
+// calculates the l2 norm of a vector
 __device__ float l2Norm(glm::vec3 a) {
     return sqrtf(a.x * a.x + a.y * a.y + a.z * a.z);
 }
 
+// calculate gird index of boids
 __global__ void assignGridIndKernel(double gridSize, int gridSizeX, int gridSizeY, int gridSizeZ,
     uint N, glm::vec3* dev_boids_p, int* dev_boids_grid_ind_1, int* dev_boids_grid_ind_2)
 {
@@ -52,6 +56,37 @@ __global__ void assignGridIndKernel(double gridSize, int gridSizeX, int gridSize
     }
 }
 
+// find start and end index of each grid
+__global__ void findGridStartEnd(int* dev_grid_start, int* dev_grid_end, int* dev_boids_grid_ind, int gridCount, uint N)
+{
+    int idx = blockDim.x * blockIdx.x + threadIdx.x;
+
+    if (idx < gridCount)
+    {
+        dev_grid_start[idx] = gridCount;
+        dev_grid_end[idx] = -1;
+    }
+    while (idx < N)
+    {
+        if (idx == 0) {
+            dev_grid_start[dev_boids_grid_ind[idx]] = 0;
+        }
+        else if (dev_boids_grid_ind[idx] != dev_boids_grid_ind[idx - 1])
+        {
+            dev_grid_end[dev_boids_grid_ind[idx - 1]] = idx - 1;
+            dev_grid_start[dev_boids_grid_ind[idx]] = idx;
+
+            if (idx == N - 1)
+            {
+                dev_grid_end[dev_boids_grid_ind[idx]] = idx;
+            }
+        }
+
+        idx += BLOCK_SIZE * BLOCK_NUMBER;
+    }
+}
+
+// update boids position and velocity
 __global__ void updateBoidsKernel(const float dt, const uint N, 
     glm::vec3* dev_boids_p, glm::vec3* dev_boids_v, 
     const int* dev_boids_grid_ind, const int* dev_grid_start, const int* dev_grid_end,
@@ -103,7 +138,6 @@ __global__ void updateBoidsKernel(const float dt, const uint N,
                                     countClose++;
                                 }
                             }
-
                         }
                     }
 
@@ -120,9 +154,10 @@ __global__ void updateBoidsKernel(const float dt, const uint N,
         close += (float)countClose * dev_boids_p[idx];
         dev_boids_v[idx] +=
             (center - dev_boids_p[idx]) * centeringFactor	// cohesion
-            + close * avoidFactor						// separation	
-            + (vel - dev_boids_v[idx]) * matchingFactor;		// alignment
+            + close * avoidFactor						    // separation	
+            + (vel - dev_boids_v[idx]) * matchingFactor;	// alignment
 
+        // add turn factor when boids are close to the margin
         if (dev_boids_p[idx].x < width * marginFactor) {
             dev_boids_v[idx].x += turnFactor;
         }
@@ -142,6 +177,7 @@ __global__ void updateBoidsKernel(const float dt, const uint N,
             dev_boids_v[idx].z -= turnFactor;
         }
     
+        // limit speed to max and min speed
         float speed = l2Norm(dev_boids_v[idx]);
         if (speed > maxSpeed) {
             dev_boids_v[idx] /= speed;
@@ -158,34 +194,6 @@ __global__ void updateBoidsKernel(const float dt, const uint N,
     }
 }
 
-__global__ void findGridStartEnd(int* dev_grid_start, int* dev_grid_end, int* dev_boids_grid_ind, int gridCount, uint N)
-{
-    int idx = blockDim.x * blockIdx.x + threadIdx.x;
-
-    if (idx < gridCount)
-    {
-        dev_grid_start[idx] = gridCount;
-        dev_grid_end[idx] = -1;
-    }
-    while (idx < N)
-    {
-        if (idx == 0) {
-            dev_grid_start[dev_boids_grid_ind[idx]] = 0;
-        }
-        else if (dev_boids_grid_ind[idx] != dev_boids_grid_ind[idx - 1])
-        {
-            dev_grid_end[dev_boids_grid_ind[idx - 1]] = idx - 1;
-            dev_grid_start[dev_boids_grid_ind[idx]] = idx;
-
-            if (idx == N - 1)
-            {
-                dev_grid_end[dev_boids_grid_ind[idx]] = idx;
-            }
-        }
-
-        idx += BLOCK_SIZE * BLOCK_NUMBER;
-    }
-}
 
 class BoidsLogicGPU: public BoidsLogic {
 private:
@@ -193,6 +201,7 @@ private:
     glm::vec3* dev_boids_v;
     cudaGraphicsResource* cuda_boids_p;
     cudaGraphicsResource* cuda_boids_v;
+    // two index arrays for sorting velocity and position
     int* dev_boids_grid_ind_1;
     int* dev_boids_grid_ind_2;
     int* dev_grid_start;
@@ -200,7 +209,7 @@ private:
     double gridSize;
     bool firstRun = true;
 
-
+    // initialize boids position and velocity
     void init()
     {
         cudaError_t cudaStatus;
@@ -229,6 +238,7 @@ private:
         delete[] boids_p;
     }
 
+    // update boids position and velocity
     void updateData(float dt)
     {
         cudaError_t cudaStatus;
@@ -259,11 +269,7 @@ private:
         }
     }
 
-    void updateBuffers(GLuint positionBuffer, GLuint velocityBuffer)
-    {
-
-    }
-
+    // calculate grid index of boids
     void assignGridInd()
     {
         cudaError_t cudaStatus;
@@ -286,6 +292,7 @@ private:
         }
     }
 
+    // sort boids by grid index and calculate start and end index of each grid
     void sortGrid()
     {
         thrust::sort_by_key(thrust::device, dev_boids_grid_ind_1, dev_boids_grid_ind_1 + N, dev_boids_v);
@@ -311,6 +318,7 @@ private:
     }
 
 public:
+    // Constructor and destructor
 	BoidsLogicGPU(uint N, uint width, uint height, uint depth) :
         BoidsLogic(N, width, height, depth)
 	{
@@ -370,6 +378,8 @@ public:
     // Update boids position and velocity
     void update(float dt, GLuint positionBuffer, GLuint velocityBuffer) {
         cudaError_t cudaStatus;
+
+        // map openGL buffer object to cuda resource on first run
         if (firstRun)
         {
             firstRun = false;
@@ -378,13 +388,12 @@ public:
                 throw std::runtime_error("cudaGraphicsGLRegisterBuffer failed!");
             }
 
-
             cudaStatus = cudaGraphicsGLRegisterBuffer(&cuda_boids_v, velocityBuffer, cudaGraphicsRegisterFlagsWriteDiscard);
             if (cudaStatus != cudaSuccess) {
                 throw std::runtime_error("cudaGraphicsGLRegisterBuffer failed!");
             }
-
         }
+
         size_t size;
         assignGridInd();
         sortGrid();
@@ -398,6 +407,7 @@ public:
             throw std::runtime_error("cudaGraphicsResourceGetMappedPointer failed!");
         }
 
+        // update boids position and velocity and send back to openGL buffer object
         updateData(dt);
 
         cudaStatus = cudaGraphicsUnmapResources(1, &cuda_boids_p, 0);
@@ -408,7 +418,6 @@ public:
         if (cudaStatus != cudaSuccess) {
             throw std::runtime_error("cudaGraphicsUnmapResources failed!");
         }
-        //updateBuffers(positionBuffer, velocityBuffer);
     }
 };
 
