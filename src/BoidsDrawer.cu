@@ -303,7 +303,8 @@ private:
 
 		if (visualRange != this->boidsLogic->visualRange)
 		{
-			this->boidsLogic->setVisualRange(visualRange);
+			if(visualRange > 0.0f)
+				this->boidsLogic->setVisualRange(visualRange);
 		}
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
