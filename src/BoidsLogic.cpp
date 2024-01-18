@@ -29,8 +29,6 @@ protected:
 		std::uniform_real_distribution<> h(0, height);
 		std::uniform_real_distribution<> z(0, depth);
 
-		float boxSize = 2 * protectedRange;
-		uint indexStride = (width - 1) / boxSize + 1;
 		for (uint i = 0; i < N; i++) {
 			boids_p[i] = glm::vec3(w(gen), h(gen), z(gen));
 		}

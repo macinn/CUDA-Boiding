@@ -1,4 +1,5 @@
 #include "BoidsLogic.cpp"
+#include "cuda/BoidsLogicGPU.cu"
 #include "BoidsModel.cpp"
 #include "Camera.cpp"
 #include "BoxModel.cpp"
@@ -201,7 +202,7 @@ private:
 		if (spaceState == GLFW_PRESS && !spacePressed)
 		{
 			spacePressed = true;
-			if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL && !this->firstMouse)
+			if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
 			{
 				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				this->firstMouse = true;
@@ -243,9 +244,9 @@ private:
 	// Initialize boids and box models
 	void initModels(uint N, uint size)
 	{
-		this->boidsLogic = new BoidsLogic(N, size, size, size);
-
 		this->boidsModel = new BoidsModel(N);
+
+		this->boidsLogic = new BoidsLogicGPU(N, size, size, size, this->boidsModel->getPositionBuffer(), this->boidsModel->getVelocityBuffer());
 
 		this->boxModel = new BoxModel(size, size, size);
 	}
@@ -345,7 +346,7 @@ public:
 		delete this->boxShader;
 		delete this->camera;
 		delete this->boidsModel;
-		delete this->boidsLogic;
+		// delete this->boidsLogic;
 		delete this->boxModel;
 	}
 

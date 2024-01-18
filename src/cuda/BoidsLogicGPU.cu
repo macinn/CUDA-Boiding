@@ -1,7 +1,6 @@
 #include "BoidsLogic.cpp"
 #include <cuda_runtime.h>
-#include <curand.h>
-#include <curand_kernel.h>
+#include <random>
 
 #include <cuda_gl_interop.h>
 #include "device_launch_parameters.h"
@@ -165,8 +164,8 @@ class BoidsLogicGPU: public BoidsLogic {
 private:
     glm::vec3* dev_boids_p;
     glm::vec3* dev_boids_v;
-    cudaGraphicsResource* cuda_boids_p = NULL;
-    cudaGraphicsResource* cuda_boids_v = NULL;
+    cudaGraphicsResource* cuda_boids_p;
+    cudaGraphicsResource* cuda_boids_v;
     int* dev_boids_grid_ind_1;
     int* dev_boids_grid_ind_2;
     int* dev_grid_start;
@@ -176,28 +175,30 @@ private:
 
     void init()
     {
-  //      cudaError_t cudaStatus;
-  //      curandGenerator_t gen;
+        cudaError_t cudaStatus;
 
-  //      if (CURAND_STATUS_SUCCESS != curandCreateGenerator(&gen, CURAND_RNG_PSEUDO_DEFAULT))
-  //      {
-
-  //      }
-
-  //      if (CURAND_STATUS_SUCCESS != curandSetPseudoRandomGeneratorSeed(gen, time(NULL)))
-  //      {
-
-  //      }
-
-  //      if (CURAND_STATUS_SUCCESS != curandGenerateUniform(gen, (float*)dev_boids_p, N * 3))
-  //      {
-
-		//}
-
-        cudaError_t cudaStatus = cudaMemset((void**)&dev_boids_v, 0, N * sizeof(glm::vec3));
+        cudaStatus = cudaMemset(dev_boids_v, 0, N * sizeof(glm::vec3));
         if (cudaStatus != cudaSuccess) {
             throw std::runtime_error("cudaMemset failed!");
         }
+
+        glm::vec3* boids_p = new glm::vec3[N]();
+        std::default_random_engine rd{ static_cast<long uint>(time(0)) };
+        std::mt19937 gen{ rd() };
+        std::uniform_real_distribution<> w(0, width);
+        std::uniform_real_distribution<> h(0, height);
+        std::uniform_real_distribution<> z(0, depth);
+
+        for (uint i = 0; i < N; i++) {
+            boids_p[i] = glm::vec3(w(gen), h(gen), z(gen));
+        }
+
+        cudaStatus = cudaMemcpy(dev_boids_v, boids_p, N * sizeof(glm::vec3), cudaMemcpyHostToDevice);
+        if (cudaStatus != cudaSuccess) {
+            throw std::runtime_error("cudaMemcpy failed!");
+        }
+
+        delete[] boids_p;
     }
 
     void updateData(float dt)
@@ -280,7 +281,7 @@ private:
     }
 
 public:
-	BoidsLogicGPU(uint N, uint width, uint height, uint depth = 0) :
+	BoidsLogicGPU(uint N, uint width, uint height, uint depth, GLuint positionBuffer, GLuint velocityBuffer) :
         BoidsLogic(N, width, height, depth)
 	{
         cudaError_t cudaStatus;
@@ -300,58 +301,56 @@ public:
             throw std::runtime_error("cudaMalloc failed!");
         }
 
-        cudaStatus = cudaMemset((void**)&dev_boids_v, 0, N * sizeof(glm::vec3));
-        if (cudaStatus != cudaSuccess) {
-            throw std::runtime_error("cudaMemset failed!");
-        }
-
         cudaStatus = cudaMalloc((void**)&dev_boids_grid_ind_1, N * sizeof(int));
         if (cudaStatus != cudaSuccess) {
-            throw std::runtime_error("cudaMemset failed!");
+            throw std::runtime_error("cudaMalloc failed!");
         }
 
         cudaStatus = cudaMalloc((void**)&dev_boids_grid_ind_2, N * sizeof(int));
         if (cudaStatus != cudaSuccess) {
-            throw std::runtime_error("cudaMemset failed!");
+            throw std::runtime_error("cudaMalloc failed!");
         }
 
         cudaStatus = cudaMalloc((void**)&dev_grid_start, N * sizeof(int));
         if (cudaStatus != cudaSuccess) {
-            throw std::runtime_error("cudaMemset failed!");
+            throw std::runtime_error("cudaMalloc failed!");
         }
 
         cudaStatus = cudaMalloc((void**)&dev_grid_end, N * sizeof(int));
         if (cudaStatus != cudaSuccess) {
-            throw std::runtime_error("cudaMemset failed!");
+            throw std::runtime_error("cudaMalloc failed!");
         }
         gridSize = 2 * visualRange;
+
+
+            cudaStatus = cudaGraphicsGLRegisterBuffer(&cuda_boids_p, positionBuffer, cudaGraphicsRegisterFlagsWriteDiscard);
+            if (cudaStatus != cudaSuccess) {
+                throw std::runtime_error("cudaGraphicsGLRegisterBuffer failed!");
+            }
+        
+
+            cudaStatus = cudaGraphicsGLRegisterBuffer(&cuda_boids_v, velocityBuffer, cudaGraphicsRegisterFlagsWriteDiscard);
+            if (cudaStatus != cudaSuccess) {
+                throw std::runtime_error("cudaGraphicsGLRegisterBuffer failed!");
+            }
+        
         // populate with random values
         this->init();
 	}
     ~BoidsLogicGPU() {
         cudaFree(dev_boids_v);
         cudaFree(dev_boids_p);
+        cudaFree(dev_boids_grid_ind_1);
+        cudaFree(dev_boids_grid_ind_2);
+        cudaFree(dev_grid_start);
+        cudaFree(dev_grid_end);
     }
 
     // Update boids position and velocity
     void update(float dt, GLuint positionBuffer, GLuint velocityBuffer) {
         cudaError_t cudaStatus;
 
-        if (cuda_boids_p == NULL)
-        {
-            cudaStatus = cudaGraphicsGLRegisterBuffer(&cuda_boids_p, positionBuffer, cudaGraphicsRegisterFlagsWriteDiscard);
-            if (cudaStatus != cudaSuccess) {
-                throw std::runtime_error("cudaGraphicsGLRegisterBuffer failed!");
-            }
-        }
-        if (cuda_boids_v == NULL)
-        {
-            cudaStatus = cudaGraphicsGLRegisterBuffer(&cuda_boids_v, velocityBuffer, cudaGraphicsRegisterFlagsWriteDiscard);
-            if (cudaStatus != cudaSuccess) {
-                throw std::runtime_error("cudaGraphicsGLRegisterBuffer failed!");
-            }
-		}
-        size_t size = N * sizeof(glm::vec3);
+        size_t size;
         assignGridInd();
         sortGrid();
 
