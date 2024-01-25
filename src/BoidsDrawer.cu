@@ -1,4 +1,5 @@
 #include "BoidsLogic.cpp"
+#include "cuda/BoidsLogicGPU.cu"
 #include "BoidsModel.cpp"
 #include "Camera.cpp"
 #include "BoxModel.cpp"
@@ -201,7 +202,7 @@ private:
 		if (spaceState == GLFW_PRESS && !spacePressed)
 		{
 			spacePressed = true;
-			if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL && !this->firstMouse)
+			if (glfwGetInputMode(window, GLFW_CURSOR) == GLFW_CURSOR_NORMAL)
 			{
 				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				this->firstMouse = true;
@@ -243,11 +244,8 @@ private:
 	// Initialize boids and box models
 	void initModels(uint N, uint size)
 	{
-		this->boidsLogic = new BoidsLogic(N, size, size, size);
-
-		this->boidsModel = new BoidsModel(N,
-			this->boidsLogic->boids_p, this->boidsLogic->boids_v);
-
+		this->boidsModel = new BoidsModel(N);
+		// this->boidsLogic = new BoidsLogicGPU(N, size, size, size, this->boidsModel->getPositionBuffer(), this->boidsModel->getVelocityBuffer());
 		this->boxModel = new BoxModel(size, size, size);
 	}
 
@@ -279,6 +277,8 @@ private:
 
 		ImGuiIO& io = ImGui::GetIO();
 
+		float visualRange = this->boidsLogic->visualRange;
+
 		ImGui::Begin("Settings");
 		ImGui::Text("Press SPACE to enable/disable mouse.");
 		ImGui::Text("Press ESC to close window.");
@@ -287,20 +287,25 @@ private:
 		{
 			this->updateModels = !this->updateModels;
 		}
-		ImGui::InputFloat("turnFactor", &this->boidsLogic->turnFactor, 0.0f, 1.0f);
-		ImGui::InputFloat("visualRange", &this->boidsLogic->visualRange, 0.0f, 1.0f);
-		ImGui::InputFloat("protectedRange", &this->boidsLogic->protectedRange, 0.0f, 1.0f);
-		ImGui::InputFloat("centeringFactor	", &this->boidsLogic->centeringFactor, 0.0f, 1.0f);
-		ImGui::InputFloat("avoidFactor", &this->boidsLogic->avoidFactor, 0.0f, 1.0f);
-		ImGui::InputFloat("matchingFactor", &this->boidsLogic->matchingFactor, 0.0f, 1.0f);
-		ImGui::InputFloat("maxSpeed", &this->boidsLogic->maxSpeed, 0.0f, 1.0f);
-		ImGui::InputFloat("minSpeed", &this->boidsLogic->minSpeed, 0.0f, 1.0f);
+		ImGui::InputFloat("Turning force", &this->boidsLogic->turnFactor, 0.0f, 1.0f);
+		ImGui::InputFloat("View range", &visualRange, 0.0f, 1.0f);
+		ImGui::InputFloat("Protected range", &this->boidsLogic->protectedRange, 0.0f, 1.0f);
+		ImGui::InputFloat("Centering factor", &this->boidsLogic->centeringFactor, 0.0f, 1.0f);
+		ImGui::InputFloat("Avoiding factor", &this->boidsLogic->avoidFactor, 0.0f, 1.0f);
+		ImGui::InputFloat("Matching factor", &this->boidsLogic->matchingFactor, 0.0f, 1.0f);
+		ImGui::InputFloat("Max speed", &this->boidsLogic->maxSpeed, 0.0f, 1.0f);
+		ImGui::InputFloat("Min speed", &this->boidsLogic->minSpeed, 0.0f, 1.0f);
 		ImGui::NewLine();
-		ImGui::InputFloat("cameraSpeed", &this->camera->movementSpeed, 0.0f, 1.0f);
-		ImGui::InputFloat("sensitivity", &this->camera->sensitivity, 0.0f, 1.0f);
+		ImGui::InputFloat("Camera speed", &this->camera->movementSpeed, 0.0f, 1.0f);
+		ImGui::InputFloat("Mouse sensivity", &this->camera->sensitivity, 0.0f, 1.0f);
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
 		ImGui::End();
 
+		if (visualRange != this->boidsLogic->visualRange)
+		{
+			if(visualRange > 0.0f)
+				this->boidsLogic->setVisualRange(visualRange);
+		}
 		ImGui::Render();
 		ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 	}
@@ -356,7 +361,7 @@ public:
 		this->updateDt();
 		this->updateInput();
 		if(updateModels)
-			this->boidsLogic->update(this->dt);
+			this->boidsLogic->update(this->dt, this->boidsModel->getPositionBuffer(), this->boidsModel->getVelocityBuffer());
 	}
 
 	// Check if window should close
@@ -396,6 +401,24 @@ public:
 			this->boidsShader->setMat4fv(this->ProjectionMatrix, "ProjectionMatrix");
 			this->boxShader->setMat4fv(this->ProjectionMatrix, "ProjectionMatrix");
 		}
+	}
+
+	// Set boids logic class
+	void setBoidsLogic(BoidsLogic* boidsLogic)
+	{
+		this->boidsLogic = boidsLogic;
+	}
+
+	// Get boids position buffer
+	GLuint getPositionBuffer()
+	{
+		return this->boidsModel->getPositionBuffer();
+	}
+
+	// Get boids velocity buffer
+	GLuint getVelocityBuffer()
+	{
+		return this->boidsModel->getVelocityBuffer();
 	}
 
 	// Render new frame

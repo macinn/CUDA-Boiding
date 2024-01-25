@@ -2,9 +2,21 @@
 # and include sub-projects here.
 #
 cmake_minimum_required (VERSION 3.8)
+set(CMAKE_TRY_COMPILE_TARGET_TYPE "STATIC_LIBRARY")
 project (shoal-of-fish)
 
 find_package(OpenGL REQUIRED)
+enable_language(CUDA)
+set(CMAKE_CUDA_ARCHITECTURES 52 61 75)
+find_package(Sanitizers)
+
+option(ASAN_ENABLED "Build this target with AddressSanitizer" ON)
+
+if(ASAN_ENABLED)
+    string(REGEX REPLACE "/RTC(su|[1su])" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+    message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}\n")
+    add_compile_options(-fsanitize=address)
+endif()
 
 # Enable Hot Reload for MSVC compilers if supported.
 if (POLICY CMP0141)
@@ -23,15 +35,17 @@ set(IMGUI_SOURCES
     lib/imgui/imgui_widgets.cpp
     lib/imgui/imgui_tables.cpp
     lib/imgui/backends/imgui_impl_glfw.cpp
-lib/imgui/backends/imgui_impl_opengl3.cpp
+    lib/imgui/backends/imgui_impl_opengl3.cpp
+    ${GPU_SOURCES}
 )
 
-file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/*.c")
-add_executable(shoal-of-fish ${MY_SOURCES} ${IMGUI_SOURCES})
+file(GLOB_RECURSE CPU_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/main.cu")
+file(GLOB_RECURSE GPU_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/cuda/*.cu")
+
+add_executable(shoal-of-fish ${CPU_SOURCES} ${IMGUI_SOURCES})
 target_compile_options(shoal-of-fish PRIVATE -Wall)
 
 file(COPY src/shaders DESTINATION "${CMAKE_CURRENT_BINARY_DIR}")
-
 
 add_definitions(-DGLEW_STATIC)
 add_subdirectory(lib/glfw EXCLUDE_FROM_ALL)
@@ -39,6 +53,9 @@ add_subdirectory(lib/glew EXCLUDE_FROM_ALL)
 add_subdirectory(lib/glm EXCLUDE_FROM_ALL)
 
 target_include_directories(shoal-of-fish PRIVATE lib/imgui)
+include_directories("${CMAKE_CUDA_TOOLKIT_INCLUDE_DIRECTORIES}")
+
+set_property(TARGET shoal-of-fish PROPERTY CUDA_SEPARABLE_COMPILATION ON)
 
 target_link_libraries(shoal-of-fish
   PRIVATE glfw
@@ -50,3 +67,5 @@ target_include_directories(shoal-of-fish
   PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
   PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src
 )
+
+
