@@ -1,18 +1,29 @@
 #include "BoidsDrawer.cu" 
 #include "cuda/BoidsLogicGPU.cu"
 
+bool isCudaAvailble()
+{
+	if (cudaSetDevice(0) != cudaSuccess) {
+		return false;
+	}
+	return true;
+}
+
 int main()
 {
 	const int WIDTH = 1920;
 	const int HEIGHT = 1080;
 	const int GL_VERSION_MAJOR = 4;
 	const int GL_VERSION_MINOR = 4;
-
+	const bool cudaAvailble = isCudaAvailble();
 	uint N, size, type;
 	std::cout << "Boids simulation, Skrzypczak Marcin" << std::endl;
 	std::cout << "Choose simulation type: " << std::endl;
 	std::cout << "1. CPU" << std::endl;
-	std::cout << "2. GPU with grid" << std::endl;
+	if (cudaAvailble)
+		std::cout << "2. GPU with grid" << std::endl;
+	else
+		std::cout << "2. GPU with grid [no CUDA device found]" << std::endl;
 	std::cin >> type;
 	std::cout << "Set container size: ";
 	std::cin >> size;

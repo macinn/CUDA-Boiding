@@ -133,7 +133,7 @@ protected:
 public:
 	// Movement parameters
 	float turnFactor = 0.2f;
-	float visualRange = 3.f;
+	float visualRange = 7.f;
 	float protectedRange = 0.75f;
 	float centeringFactor = 0.03f;
 	float avoidFactor = 0.05f;
