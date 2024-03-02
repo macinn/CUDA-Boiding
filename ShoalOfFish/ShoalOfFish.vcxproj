@@ -139,7 +139,6 @@
   <ItemGroup>
     <ClInclude Include="..\Dependencies\include\imgui\backends\imgui_impl_glfw.h" />
     <ClInclude Include="..\Dependencies\include\imgui\backends\imgui_impl_opengl3.h" />
-    <ClInclude Include="..\Dependencies\include\imgui\backends\imgui_impl_opengl3_loader.h" />
     <ClInclude Include="..\Dependencies\include\imgui\imconfig.h" />
     <ClInclude Include="..\Dependencies\include\imgui\imgui.h" />
     <ClInclude Include="..\Dependencies\include\imgui\imgui_internal.h" />
@@ -148,6 +147,8 @@
     <ClInclude Include="..\Dependencies\include\imgui\imstb_truetype.h" />
     <ClInclude Include="BoidsDrawer.cuh" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="shaders_box.h" />
+    <ClInclude Include="shaders_core.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\Dependencies\include\imgui\backends\imgui_impl_glfw.cpp" />

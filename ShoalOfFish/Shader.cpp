@@ -14,7 +14,7 @@ private:
 	GLuint id;
 
 	// Load shader as string from file
-	std::string loadShaderSource(char* fileName)
+	std::string loadShaderSource(const char* fileName)
 	{
 		std::string temp = "";
 		std::string src = "";
@@ -38,7 +38,7 @@ private:
 	}
 
 	// Compile shader
-	GLuint loadShader(GLenum type, char* fileName)
+	GLuint loadShaderFromFile(GLenum type, const char* fileName)
 	{
 		char infoLog[512];
 		GLint success;
@@ -54,6 +54,28 @@ private:
 		{
 			glGetShaderInfoLog(shader, 512, NULL, infoLog);
 			std::cout << "ERROR::SHADER::COULD_NOT_COMPILE_SHADER: " << fileName << "\n";
+			std::cout << infoLog << "\n";
+		}
+
+		return shader;
+	}
+	
+	GLuint loadShaderFromSrc(GLenum type, const char* shadersrc)
+	{
+		char infoLog[512];
+		GLint success;
+
+		GLuint shader = glCreateShader(type);
+		std::string str_src = shadersrc;
+		const GLchar* src = str_src.c_str();
+		glShaderSource(shader, 1, &src, NULL);
+		glCompileShader(shader);
+
+		glGetShaderiv(shader, GL_COMPILE_STATUS, &success);
+		if (!success)
+		{
+			glGetShaderInfoLog(shader, 512, NULL, infoLog);
+			std::cout << "ERROR::SHADER::COULD_NOT_COMPILE_SHADER: " << shadersrc << "\n";
 			std::cout << infoLog << "\n";
 		}
 
@@ -86,13 +108,13 @@ private:
 public:
 
 	// Create shader from files
-	Shader(char* vertexFile, char* fragmentFile)
+	Shader(const char* vertexSrc,const char* fragmentSrc)
 	{
 		GLuint vertexShader = 0;
 		GLuint fragmentShader = 0;
 
-		vertexShader = loadShader(GL_VERTEX_SHADER, vertexFile);
-		fragmentShader = loadShader(GL_FRAGMENT_SHADER, fragmentFile);
+		vertexShader = loadShaderFromSrc(GL_VERTEX_SHADER, vertexSrc);
+		fragmentShader = loadShaderFromSrc(GL_FRAGMENT_SHADER, fragmentSrc);
 
 		this->linkProgram(vertexShader, fragmentShader);
 

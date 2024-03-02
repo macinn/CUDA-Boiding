@@ -8,6 +8,9 @@
 #include "imgui/backends/imgui_impl_opengl3.h"
 #include "imgui/backends/imgui_impl_glfw.h"
 
+#include "shaders_box.h"
+#include "shaders_core.h"
+
 #pragma once	
 
 // Main drawer class
@@ -144,8 +147,10 @@ private:
 	// Initialize shaders
 	void initShaders()
 	{
-		this->boidsShader = new Shader("shaders/boids/vertex_core.glsl", "shaders/boids/fragment_core.glsl");
-		this->boxShader = new Shader("shaders/box/vertex_box.glsl", "shaders/box/fragment_box.glsl");
+		/*this->boidsShader = new Shader("shaders/boids/vertex_core.glsl", "shaders/boids/fragment_core.glsl");
+		this->boxShader = new Shader("shaders/box/vertex_box.glsl", "shaders/box/fragment_box.glsl");*/
+		this->boidsShader = new Shader(vertex_core, fragment_core);
+		this->boxShader = new Shader(vertex_box, fragment_box);
 	}
 
 	// Initialize viewMatrix, projectionMatrix and light

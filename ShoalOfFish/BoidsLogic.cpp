@@ -95,7 +95,8 @@ protected:
 						if (distanceSquared < protectedRangeSquared)
 						{
 							vel += boids_v[j];
-							close -= boids_p[j];
+							close += (boids_p[i] - boids_p[j]) 
+								* (protectedRangeSquared - distanceSquared);
 							countClose++;
 						}
 					}
@@ -111,7 +112,7 @@ protected:
 				}
 			}
 
-			close += (float)countClose * boids_p[i];
+			close /= protectedRangeSquared;
 			boids_v[i] +=
 				(center - boids_p[i]) * centeringFactor		// cohesion
 				+ close * avoidFactor						// separation	
