@@ -165,5 +165,47 @@ public:
 	virtual void setVisualRange(float visualRange) {
 		this->visualRange = visualRange;
 	}
+
+	// Update data in model buffors
+	void updateBuffers(GLuint positionBuffer, GLuint velocityBuffer)
+	{
+		glNamedBufferSubData(positionBuffer, 0, this->N * sizeof(glm::vec3), this->boids_p);
+		glNamedBufferSubData(velocityBuffer, 0, this->N * sizeof(glm::vec3), this->boids_v);
+	}
+
+public:
+	// Movement parameters
+	float turnFactor = 0.2f;
+	float visualRange = 3.f;
+	float protectedRange = 0.75f;
+	float centeringFactor = 0.03f;
+	float avoidFactor = 0.05f;
+	float matchingFactor = 0.1f;
+	float maxSpeed = 10.f;
+	float minSpeed = 5.f;
+
+	// Constructor and destructor
+	BoidsLogic(uint N, uint width, uint height, uint depth = 0):
+		N(N), width(width), height(height), depth(!depth ? (width+height)/2 : depth)
+	{
+		boids_p = new glm::vec3[N]();
+		boids_v = new glm::vec3[N]();
+		this->init();
+	}
+	virtual ~BoidsLogic() {
+		delete[] boids_p;
+		delete[] boids_v;
+	}
+
+	// Update boids position and velocity
+	virtual void update(float dt, GLuint positionBuffer, GLuint velocityBuffer) {
+		updateData(dt);
+		updateBuffers(positionBuffer, velocityBuffer);
+	}
+
+	// Visual range setter
+	virtual void setVisualRange(float visualRange) {
+		this->visualRange = visualRange;
+	}
 };
 

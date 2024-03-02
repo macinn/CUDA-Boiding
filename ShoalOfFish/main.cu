@@ -21,7 +21,7 @@ int main()
 	std::cout << "Choose simulation type: " << std::endl;
 	std::cout << "1. CPU" << std::endl;
 	if (cudaAvailable)
-		std::cout << "2. GPU with grid" << std::endl;
+	std::cout << "2. GPU with grid" << std::endl;
 	else 
 		std::cout << "2. GPU with grid (no CUDA device found!)" << std::endl;
 	std::cin >> type;

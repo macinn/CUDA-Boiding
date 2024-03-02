@@ -1,4 +1,4 @@
-#include "../BoidsLogic.cpp"
+#include "BoidsLogic.cpp"
 #include <cuda_runtime.h>
 #include <random>
 
