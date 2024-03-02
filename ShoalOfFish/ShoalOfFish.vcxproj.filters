@@ -17,7 +17,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BoidsDrawer.cuh">
+    <ClInclude Include="BoidsDrawer.cu">
       <Filter>Source Files</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">

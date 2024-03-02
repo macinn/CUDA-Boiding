@@ -145,7 +145,10 @@
     <ClInclude Include="..\Dependencies\include\imgui\imstb_rectpack.h" />
     <ClInclude Include="..\Dependencies\include\imgui\imstb_textedit.h" />
     <ClInclude Include="..\Dependencies\include\imgui\imstb_truetype.h" />
-    <ClInclude Include="BoidsDrawer.cuh" />
+    <ClInclude Include="BoidsDrawer.cu">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    </ClInclude>
     <ClInclude Include="Model.h" />
     <ClInclude Include="shaders_box.h" />
     <ClInclude Include="shaders_core.h" />

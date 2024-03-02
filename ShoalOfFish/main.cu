@@ -1,4 +1,4 @@
-#include "BoidsDrawer.cuh" 
+#include "BoidsDrawer.cu" 
 #include "cuda/BoidsLogicGPU.cu"
 
 static bool isCudaAvaialable()
