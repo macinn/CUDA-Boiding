@@ -1,0 +1,20 @@
+Klawisze:
+
+ESC - wyjœcie
+SPACE - prze³¹czanie miêdzy poruszaniem kamer¹ a poruszaniem kursorem
+W, S, A, D - poruszanie kamer¹, zgodnie z orientacj¹ kamery
+
+Parametry:
+
+Stop animation - zatrzymuje poruszanie obiektów, kamera nadal dzia³a
+Turning force - przyspieszenie zawracania obiuektów zbli¿aj¹cych siê do krawêdzi ograniczenia
+View range - zasiêg widzenia ryb, w którym zachodz¹ pomiêdzy nimi interakcje
+Protected range - zasiêg widzenia ryb, w którym zaczynaj¹ siê od siebie oddalaæ
+Centering factor - wspó³czynnik, który okreœla jak bardzo ryby bêd¹ siê stara³y wróciæ do œrodka masy pobliskich ryb
+Avoiding factor - wspó³czynnik, który okreœla jak bardzo ryby bêd¹ siê stara³y unikaæ siebie nawzajem po zbli¿eniu siê na 'Protected range'
+Matching factor - wspó³czynnik, który okreœla jak bardzo ryby bêd¹ siê stara³y poruszaæ zgodnie z kierunkiem masy pobliskich ryb
+Max speed - maksymalna prêdkoœæ ryb
+Min speed - minimalna prêdkoœæ ryb
+
+Camera speed - prêdkoœæ poruszania siê kamery
+Mouse sensitivity - czu³oœæ myszy
