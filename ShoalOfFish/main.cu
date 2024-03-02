@@ -14,6 +14,7 @@ int main()
 	const int HEIGHT = 1080;
 	const int GL_VERSION_MAJOR = 4;
 	const int GL_VERSION_MINOR = 4;
+	const bool cudaAvailable = isCudaAvaialable();
 
 	uint N, size, type;
 	std::cout << "Boids simulation, Skrzypczak Marcin" << std::endl;

@@ -4,10 +4,11 @@
 #include "Camera.cpp"
 #include "BoxModel.cpp"
 
-#include "backends/imgui_impl_opengl3.h"
-#include "backends/imgui_impl_glfw.h"
+#include "imgui/imgui.h"
+#include "imgui/backends/imgui_impl_opengl3.h"
+#include "imgui/backends/imgui_impl_glfw.h"
 
-#pragma once
+#pragma once	
 
 // Main drawer class
 class BoidsDrawer
@@ -55,8 +56,8 @@ private:
 	double lastMouseY;
 	double mouseX;
 	double mouseY;
-	double mouseOffsetX;
-	double mouseOffsetY;
+	double mouseOffsetX = 0;
+	double mouseOffsetY = 0;
 	bool firstMouse;
 	bool spacePressed = false;
 
