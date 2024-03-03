@@ -1,7 +1,6 @@
-#include "Shader.cpp"
-
 #pragma once
 
+#include "Shader.cpp"
 
 class BoxModel
 {

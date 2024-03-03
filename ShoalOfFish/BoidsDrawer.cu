@@ -1,3 +1,5 @@
+#pragma once
+
 #include "BoidsLogic.cpp"
 #include "BoidsModel.cpp"
 #include "Camera.cpp"

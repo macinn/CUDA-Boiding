@@ -1,7 +1,7 @@
+#pragma once
+
 #include "Shader.cpp"
 #include "Model.h"
-
-#pragma once
 
 // Structure of vertex with normal vector and position
 struct Vertex

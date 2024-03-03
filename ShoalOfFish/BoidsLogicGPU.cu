@@ -1,3 +1,5 @@
+#pragma once
+
 #include "BoidsLogic.cpp"
 #include <cuda_runtime.h>
 #include <random>
@@ -13,8 +15,6 @@
 
 #define BLOCK_SIZE 1024
 #define BLOCK_NUMBER 12
-
-#pragma once
 
 // returns std::max(std::min(x, max), min)
 __device__ int clamp(int min, int x, int max)

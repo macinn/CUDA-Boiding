@@ -1,11 +1,11 @@
+#pragma once
+
 #include <GL/glew.h>
 #include <glm/vec3.hpp>
 #include <glm/gtx/norm.hpp>
 #include <random>
 #include <iostream>
 #define uint unsigned int
-
-#pragma once
 
 class BoidsLogic {
 protected:
