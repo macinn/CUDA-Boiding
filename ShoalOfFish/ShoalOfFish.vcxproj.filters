@@ -20,9 +20,6 @@
     <ClInclude Include="BoidsDrawer.cu">
       <Filter>Source Files</Filter>
     </ClInclude>
-    <ClInclude Include="Model.h">
-      <Filter>Source Files</Filter>
-    </ClInclude>
     <ClInclude Include="..\Dependencies\include\imgui\imconfig.h">
       <Filter>Header Files\imgui</Filter>
     </ClInclude>
@@ -52,6 +49,9 @@
     </ClInclude>
     <ClInclude Include="shaders_core.h">
       <Filter>Shader FIles</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -96,7 +96,7 @@
     <CudaCompile Include="main.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
-    <CudaCompile Include="cuda\BoidsLogicGPU.cu">
+    <CudaCompile Include="BoidsLogicGPU.cu">
       <Filter>Source Files</Filter>
     </CudaCompile>
   </ItemGroup>

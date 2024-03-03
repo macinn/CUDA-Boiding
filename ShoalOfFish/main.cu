@@ -1,5 +1,9 @@
 #include "BoidsDrawer.cu" 
-#include "cuda/BoidsLogicGPU.cu"
+#include "BoidsLogic.cpp"
+#include "BoidsLogicGPU.cu"
+#include <cuda_runtime_api.h>
+#include <iostream>
+#include <ostream>
 
 static bool isCudaAvaialable()
 {
@@ -16,7 +20,7 @@ int main()
 	const int GL_VERSION_MINOR = 4;
 	const bool cudaAvailable = isCudaAvaialable();
 
-	uint N, size, type;
+	unsigned int N, size, type;
 	std::cout << "Boids simulation, Skrzypczak Marcin" << std::endl;
 	std::cout << "Choose simulation type: " << std::endl;
 	std::cout << "1. CPU" << std::endl;

@@ -1,5 +1,4 @@
 #include "BoidsLogic.cpp"
-#include "cuda/BoidsLogicGPU.cu"
 #include "BoidsModel.cpp"
 #include "Camera.cpp"
 #include "BoxModel.cpp"
@@ -11,8 +10,7 @@
 #include "shaders_box.h"
 #include "shaders_core.h"
 
-#pragma once	
-
+#pragma once
 // Main drawer class
 class BoidsDrawer
 {
@@ -248,7 +246,7 @@ private:
 	}
 
 	// Initialize boids and box models
-	void initModels(uint N, uint size)
+	void initModels(unsigned int N, unsigned int size)
 	{
 		this->boidsModel = new BoidsModel(N);
 		// this->boidsLogic = new BoidsLogicGPU(N, size, size, size, this->boidsModel->getPositionBuffer(), this->boidsModel->getVelocityBuffer());
@@ -320,7 +318,7 @@ public:
 	BoidsDrawer(const char* title,
 		const int WINDOW_WIDTH, const int WINDOW_HEIGHT,
 		const int GL_VERSION_MAJOR, const int GL_VERSION_MINOR,
-		bool resizable, uint N, uint size
+		bool resizable, unsigned int N, unsigned int size
 	) :WINDOW_WIDTH(WINDOW_WIDTH),
 		WINDOW_HEIGHT(WINDOW_HEIGHT),
 		GL_VERSION_MAJOR(GL_VERSION_MAJOR),

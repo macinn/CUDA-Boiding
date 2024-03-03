@@ -36,7 +36,7 @@ __device__ float l2Norm(glm::vec3 a) {
 
 // calculate gird index of boids
 __global__ void assignGridIndKernel(double gridSize, int gridSizeX, int gridSizeY, int gridSizeZ,
-    uint N, glm::vec3* dev_boids_p, int* dev_boids_grid_ind_1, int* dev_boids_grid_ind_2)
+    unsigned int N, glm::vec3* dev_boids_p, int* dev_boids_grid_ind_1, int* dev_boids_grid_ind_2)
 {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
     while (idx < N)
@@ -57,7 +57,7 @@ __global__ void assignGridIndKernel(double gridSize, int gridSizeX, int gridSize
 }
 
 // find start and end index of each grid
-__global__ void findGridStartEnd(int* dev_grid_start, int* dev_grid_end, int* dev_boids_grid_ind, int gridCount, uint N)
+__global__ void findGridStartEnd(int* dev_grid_start, int* dev_grid_end, int* dev_boids_grid_ind, int gridCount, unsigned int N)
 {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
 
@@ -89,14 +89,14 @@ __global__ void findGridStartEnd(int* dev_grid_start, int* dev_grid_end, int* de
 }
 
 // update boids position and velocity
-__global__ void updateBoidsKernel(const float dt, const uint N, 
+__global__ void updateBoidsKernel(const float dt, const unsigned int N, 
     glm::vec3* dev_boids_p, glm::vec3* dev_boids_v, 
     const int* dev_boids_grid_ind, const int* dev_grid_start, const int* dev_grid_end,
     const int gridSizeX, const int gridSizeY, const int gridSizeZ,
     const float turnFactor, const float visualRange, const float protectedRange,
     const float centeringFactor, float avoidFactor, float matchingFactor,
     const float maxSpeed, const float minSpeed,
-    const uint width, const uint height, const uint depth,
+    const unsigned int width, const unsigned int height, const unsigned int depth,
     const float marginFactor)
 {
     int idx = blockDim.x * blockIdx.x + threadIdx.x;
@@ -106,8 +106,8 @@ __global__ void updateBoidsKernel(const float dt, const uint N,
     while (idx < N)
     {
         const int current_grid_id = dev_boids_grid_ind[idx];
-        uint countVisible = 0;
-        uint countClose = 0;
+        unsigned int countVisible = 0;
+        unsigned int countClose = 0;
         glm::vec3 vel = glm::vec3(0.0f);
         glm::vec3 center = glm::vec3(0.0f);
         glm::vec3 close = glm::vec3(0.0f);
@@ -228,13 +228,13 @@ private:
         }
 
         glm::vec3* boids_p = new glm::vec3[N]();
-        std::default_random_engine rd{ static_cast<long uint>(time(0)) };
+        std::default_random_engine rd{ static_cast<long unsigned int>(time(0)) };
         std::mt19937 gen{ rd() };
         std::uniform_real_distribution<> w(0, width);
         std::uniform_real_distribution<> h(0, height);
         std::uniform_real_distribution<> z(0, depth);
 
-        for (uint i = 0; i < N; i++) {
+        for (unsigned int i = 0; i < N; i++) {
             boids_p[i] = glm::vec3(w(gen), h(gen), z(gen));
         }
 
@@ -316,7 +316,7 @@ private:
 
 public:
     // Constructor and destructor
-	BoidsLogicGPU(uint N, uint width, uint height, uint depth) :
+	BoidsLogicGPU(unsigned int N, unsigned int width, unsigned int height, unsigned int depth) :
         BoidsLogic(N, width, height, depth)
 	{
         cudaError_t cudaStatus;
