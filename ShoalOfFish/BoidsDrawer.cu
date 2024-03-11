@@ -2,17 +2,22 @@
 
 #include "BoidsLogic.cpp"
 #include "BoidsModel.cpp"
-#include "Camera.cpp"
 #include "BoxModel.cpp"
+#include "Camera.cpp"
 
-#include "imgui/imgui.h"
-#include "imgui/backends/imgui_impl_opengl3.h"
 #include "imgui/backends/imgui_impl_glfw.h"
+#include "imgui/backends/imgui_impl_opengl3.h"
+#include "imgui/imgui.h"
 
 #include "shaders_box.h"
 #include "shaders_core.h"
+#include <iostream>
+#include <GL/glew.h>
+#include <GLFW/glfw3.h>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/fwd.hpp>
+#include "Shader.cpp"
 
-#pragma once
 // Main drawer class
 class BoidsDrawer
 {

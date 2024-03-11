@@ -1,17 +1,24 @@
 #pragma once
 
 #include "BoidsLogic.cpp"
-#include <cuda_runtime.h>
 #include <random>
 
-#include <cuda_gl_interop.h>
 #include "device_launch_parameters.h"
+#include <cuda_gl_interop.h>
 
-#include <thrust/sort.h>
-#include <thrust/copy.h>
-#include <thrust/gather.h>
-#include <thrust/execution_policy.h>
 #include <stdexcept>
+#include <thrust/execution_policy.h>
+#include <math.h>
+#include <time.h>
+#include <iostream>
+#include <ostream>
+#include <crt/host_defines.h>
+#include <cuda_runtime_api.h>
+#include <driver_types.h>
+#include <thrust/detail/sort.inl>
+#include <thrust/system/cuda/detail/guarded_driver_types.h>
+#include <GL/glew.h>
+#include <glm/ext/vector_float3.hpp>
 
 #define BLOCK_SIZE 1024
 #define BLOCK_NUMBER 12

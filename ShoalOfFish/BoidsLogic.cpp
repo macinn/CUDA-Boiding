@@ -1,19 +1,18 @@
 #pragma once
 
 #include <GL/glew.h>
-#include <glm/vec3.hpp>
-#include <glm/gtx/norm.hpp>
 #include <random>
-#include <iostream>
-#define uint unsigned int
+#include <time.h>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/gtx/norm.hpp>
 
 class BoidsLogic {
 protected:
 	// Boids number and container size
-	const uint N;
-	const uint width;
-	const uint height;
-	const uint depth;
+	const unsigned int N;
+	const unsigned int width;
+	const unsigned int height;
+	const unsigned int depth;
 
 	// Boids position and velocity
 	glm::vec3* boids_p;
@@ -24,13 +23,13 @@ protected:
 
 	// Initialize boids position
 	void init() {
-		std::default_random_engine rd{ static_cast<long uint>(time(0)) };
+		std::default_random_engine rd{ static_cast<unsigned int>(time(0)) };
 		std::mt19937 gen{ rd() };
 		std::uniform_real_distribution<> w(0, width);
 		std::uniform_real_distribution<> h(0, height);
 		std::uniform_real_distribution<> z(0, depth);
 
-		for (uint i = 0; i < N; i++) {
+		for (unsigned int i = 0; i < N; i++) {
 			boids_p[i] = glm::vec3(w(gen), h(gen), z(gen));
 		}
 	}
@@ -76,15 +75,15 @@ protected:
 		float visualRangeSquared = visualRange * visualRange;
 		float protectedRangeSquared = protectedRange * protectedRange;
 
-		for (uint i = 0; i < N; i++) {
+		for (unsigned int i = 0; i < N; i++) {
 
-			uint countVisible = 0;
-			uint countClose = 0;
+			unsigned int countVisible = 0;
+			unsigned int countClose = 0;
 			glm::vec3 vel = glm::vec3(0.0f);
 			glm::vec3 center = glm::vec3(0.0f);
 			glm::vec3 close = glm::vec3(0.0f);
 
-			for (uint j = 0; j < N; j++) {
+			for (unsigned int j = 0; j < N; j++) {
 				if (i != j) {
 					float distanceSquared = glm::distance2(boids_p[i], boids_p[j]);
 					if (distanceSquared < visualRangeSquared)
@@ -143,7 +142,7 @@ public:
 	float minSpeed = 5.f;
 
 	// Constructor and destructor
-	BoidsLogic(uint N, uint width, uint height, uint depth = 0):
+	BoidsLogic(unsigned int N, unsigned int width, unsigned int height, unsigned int depth = 0):
 		N(N), width(width), height(height), depth(!depth ? (width+height)/2 : depth)
 	{
 		boids_p = new glm::vec3[N]();
