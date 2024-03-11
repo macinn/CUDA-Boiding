@@ -1,8 +1,8 @@
 #pragma once
 
 #include <fstream>
-#include <string>
 #include <iostream>
+#include <string>
 
 #include <GL/glew.h>
 #include <glm/glm.hpp>
@@ -59,7 +59,7 @@ private:
 
 		return shader;
 	}
-	
+
 	GLuint loadShaderFromSrc(GLenum type, const char* shadersrc)
 	{
 		char infoLog[512];
@@ -108,7 +108,7 @@ private:
 public:
 
 	// Create shader from files
-	Shader(const char* vertexSrc,const char* fragmentSrc)
+	Shader(const char* vertexSrc, const char* fragmentSrc)
 	{
 		GLuint vertexShader = 0;
 		GLuint fragmentShader = 0;
@@ -143,34 +143,36 @@ public:
 	void setVec3f(glm::fvec3 value, const GLchar* name)
 	{
 		this->use();
-
 		glUniform3fv(glGetUniformLocation(this->id, name), 1, glm::value_ptr(value));
-
 		this->unuse();
 	}
+
 	void setVec4f(glm::fvec4 value, const GLchar* name)
 	{
 		this->use();
-
 		glUniform4fv(glGetUniformLocation(this->id, name), 1, glm::value_ptr(value));
-
 		this->unuse();
 	}
+
 	void setMat3fv(glm::mat3 value, const GLchar* name, GLboolean transpose = GL_FALSE)
 	{
 		this->use();
-
 		glUniformMatrix3fv(glGetUniformLocation(this->id, name), 1, transpose, glm::value_ptr(value));
-
 		this->unuse();
 	}
+
 	void setMat4fv(glm::mat4 value, const GLchar* name, GLboolean transpose = GL_FALSE)
 	{
 		this->use();
-
 		glUniformMatrix4fv(glGetUniformLocation(this->id, name), 1, transpose, glm::value_ptr(value));
-
 		this->unuse();
 	}
-	
+
+	void setFloat(float value, const GLchar* name)
+	{
+		this->use();
+		glUniform1f(glGetUniformLocation(this->id, name), value);
+		this->unuse();
+	}
+
 };
