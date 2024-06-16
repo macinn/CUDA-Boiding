@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BoidsLogic.cpp"
+#include "BoidsLogicGPU_SH.cuh" 
 #include <random>
 
 #include "device_launch_parameters.h"
@@ -204,27 +204,7 @@ __global__ void updateBoidsKernel(const float dt, const unsigned int N,
     }
 }
 
-
-class BoidsLogicGPU: public BoidsLogic {
-private:
-    glm::vec3* dev_boids_p;
-    glm::vec3* dev_boids_v;
-    cudaGraphicsResource* cuda_boids_p = NULL;
-    cudaGraphicsResource* cuda_boids_v = NULL;
-    // two index arrays for sorting velocity and position
-    int* dev_boids_grid_ind_1;
-    int* dev_boids_grid_ind_2;
-    int* dev_grid_start;
-    int* dev_grid_end;
-    double gridSize;
-    bool firstRun = true;
-
-    int gridSizeX;
-    int gridSizeY;
-    int gridSizeZ;
-
-    // initialize boids position and velocity
-    void init()
+    void BoidsLogicGPU_SH::init()
     {
         cudaError_t cudaStatus;
 
@@ -254,7 +234,7 @@ private:
     }
 
     // update boids position and velocity
-    void updateData(float dt)
+    void BoidsLogicGPU_SH::updateData(float dt)
     {
         cudaError_t cudaStatus;
 
@@ -282,7 +262,7 @@ private:
     }
 
     // calculate grid index of boids
-    void assignGridInd()
+    void BoidsLogicGPU_SH::assignGridInd()
     {
         cudaError_t cudaStatus;
 
@@ -301,7 +281,7 @@ private:
     }
 
     // sort boids by grid index and calculate start and end index of each grid
-    void sortGrid()
+    void BoidsLogicGPU_SH::sortGrid()
     {
         thrust::sort_by_key(thrust::device, dev_boids_grid_ind_1, dev_boids_grid_ind_1 + N, dev_boids_v);
         thrust::sort_by_key(thrust::device, dev_boids_grid_ind_2, dev_boids_grid_ind_2 + N, dev_boids_p);
@@ -321,9 +301,8 @@ private:
         }
     }
 
-public:
     // Constructor and destructor
-	BoidsLogicGPU(unsigned int N, unsigned int width, unsigned int height, unsigned int depth) :
+    BoidsLogicGPU_SH::BoidsLogicGPU_SH(unsigned int N, unsigned int width, unsigned int height, unsigned int depth) :
         BoidsLogic(N, width, height, depth)
 	{
         cudaError_t cudaStatus;
@@ -365,7 +344,7 @@ public:
             throw std::runtime_error("cudaMalloc failed!");
         }
 	}
-    ~BoidsLogicGPU() {
+    BoidsLogicGPU_SH::~BoidsLogicGPU_SH() {
         cudaFree(dev_boids_v);
         cudaFree(dev_boids_p);
         cudaFree(dev_boids_grid_ind_1);
@@ -375,7 +354,7 @@ public:
     }
 
     // Update boids position and velocity
-    void update(float dt, GLuint positionBuffer, GLuint velocityBuffer) override
+    void BoidsLogicGPU_SH::update(float dt, GLuint positionBuffer, GLuint velocityBuffer)
     {
         cudaError_t cudaStatus;
         size_t size;
@@ -461,7 +440,7 @@ public:
     }
 
     // Set visual range, update grid parameters
-    void setVisualRange(float visualRange) override
+    void BoidsLogicGPU_SH::setVisualRange(float visualRange)
     {
         this->visualRange = visualRange;
         this->gridSize = 1.f * visualRange;
@@ -469,5 +448,5 @@ public:
         this->gridSizeY = (height - 1) / gridSize + 1;
         this->gridSizeZ = (depth - 1) / gridSize + 1;
     }
-};
+
 

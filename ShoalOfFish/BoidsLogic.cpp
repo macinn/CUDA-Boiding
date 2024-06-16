@@ -142,13 +142,14 @@ public:
 	float minSpeed = 5.f;
 
 	// Constructor and destructor
-	BoidsLogic(unsigned int N, unsigned int width, unsigned int height, unsigned int depth = 0):
+	BoidsLogic(unsigned int N, unsigned int width, unsigned int height, unsigned int depth):
 		N(N), width(width), height(height), depth(!depth ? (width+height)/2 : depth)
 	{
 		boids_p = new glm::vec3[N]();
 		boids_v = new glm::vec3[N]();
 		this->init();
 	}
+
 	virtual ~BoidsLogic() {
 		delete[] boids_p;
 		delete[] boids_v;

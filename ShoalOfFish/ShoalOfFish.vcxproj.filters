@@ -15,6 +15,9 @@
     <Filter Include="Shader FIles">
       <UniqueIdentifier>{026b4f0f-62a1-45ac-8fac-9c43fdccdd43}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Menu">
+      <UniqueIdentifier>{9a91ba23-58e6-4189-926f-302670a7dfde}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="BoidsDrawer.cu">
@@ -51,6 +54,12 @@
       <Filter>Shader FIles</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Menu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="BoidsLogicGPU_SH.cuh">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -91,13 +100,19 @@
     <ClCompile Include="..\Dependencies\include\imgui\backends\imgui_impl_opengl3.cpp">
       <Filter>Header Files\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="ProgressBar.cpp">
+      <Filter>Source Files\Menu</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="main.cu">
+    <CudaCompile Include="main.cpp">
       <Filter>Source Files</Filter>
     </CudaCompile>
-    <CudaCompile Include="BoidsLogicGPU.cu">
+    <CudaCompile Include="BoidsLogicGPU_SH.cpp">
       <Filter>Source Files</Filter>
+    </CudaCompile>
+    <CudaCompile Include="Menu.cpp">
+      <Filter>Source Files\Menu</Filter>
     </CudaCompile>
   </ItemGroup>
 </Project>

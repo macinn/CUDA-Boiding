@@ -149,6 +149,8 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
+    <ClInclude Include="BoidsLogicGPU_SH.cuh" />
+    <ClInclude Include="Menu.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="shaders_box.h" />
     <ClInclude Include="shaders_core.h" />
@@ -165,14 +167,16 @@
     <ClCompile Include="BoidsModel.cpp" />
     <ClCompile Include="BoxModel.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="ProgressBar.cpp" />
     <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="BoidsLogicGPU.cu">
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
-      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
+    <CudaCompile Include="BoidsLogicGPU_SH.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </CudaCompile>
-    <CudaCompile Include="main.cu" />
+    <CudaCompile Include="main.cpp" />
+    <CudaCompile Include="Menu.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
