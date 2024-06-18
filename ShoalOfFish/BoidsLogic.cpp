@@ -70,7 +70,7 @@ protected:
 	}
 
 	// Update position and velocity
-	void updateData(float dt)
+	virtual void updateData(float dt)
 	{
 		float visualRangeSquared = visualRange * visualRange;
 		float protectedRangeSquared = protectedRange * protectedRange;
@@ -85,7 +85,7 @@ protected:
 
 			for (unsigned int j = 0; j < N; j++) {
 				if (i != j) {
-					float distanceSquared = glm::distance2(boids_p[i], boids_p[j]);
+					float distanceSquared = glm::length2(boids_p[i] - boids_p[j]);
 					if (distanceSquared < visualRangeSquared)
 					{
 						center += boids_p[j];
@@ -94,7 +94,7 @@ protected:
 						if (distanceSquared < protectedRangeSquared)
 						{
 							vel += boids_v[j];
-							close += (boids_p[i] - boids_p[j]) 
+							close += (boids_p[i] - boids_p[j])
 								* (protectedRangeSquared - distanceSquared);
 							countClose++;
 						}
@@ -116,7 +116,9 @@ protected:
 				(center - boids_p[i]) * centeringFactor		// cohesion
 				+ close * avoidFactor						// separation	
 				+ (vel - boids_v[i]) * matchingFactor;		// alignment
-
+		}
+		for (int i = 0; i < N; i++)
+		{
 			boundPosition(i);
 			boundVelocity(i);
 			boids_p[i] += boids_v[i] * dt;

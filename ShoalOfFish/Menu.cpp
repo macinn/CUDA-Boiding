@@ -4,6 +4,8 @@
 #include <driver_types.h>
 #include "BoidsDrawer.cu" 
 #include "BoidsLogicGPU_SH.cuh"
+#include "BoidsLogickCPU_P.cpp"
+#include "BoidsLogicTEST.cpp"
 #include "ProgressBar.cpp"
 #include <vector>
 #include <iomanip>
@@ -13,12 +15,7 @@
 class Menu;
 
 using uint = unsigned int;
-static bool isCudaAvaialable()
-{
-	int deviceCount;
-	cudaError_t cerr = cudaGetDeviceCount(&deviceCount);
-	return cerr == cudaSuccess && deviceCount > 0;
-}
+
 
 class MenuOption
 {
@@ -57,10 +54,12 @@ class Menu
 	std::vector<MenuOption*> availbleEngines = {
 		new LogicOption("CPU", true, [](uint N, uint w, uint h, uint d) -> BoidsLogic*
 			{return new BoidsLogic(N, w, h, d); }),
+		new LogicOption("CPU parallel TEST", true, [](uint N, uint w, uint h, uint d) -> BoidsLogic*
+			{return new BoidsLogicTEST(N, w, h, d); } ),
 		new LogicOption("CPU parallel", true, [](uint N, uint w, uint h, uint d) -> BoidsLogic*
 			{return new BoidsLogic(N, w, h, d); } ),
 		new LogicOption("GPU with spatial hashing", cudaAvailable, [](uint N, uint w, uint h, uint d) -> BoidsLogic*
-			{return new BoidsLogicGPU_SH(N, w, h, d); })};
+			{return new BoidsLogicCPU_P(N, w, h, d); })};
 	std::vector<MenuOption*> availbleModes = {
 		new ModeOption{"Run simulation", &Menu::runDrawer},
 		new ModeOption{"Run benchmark", &Menu::runBenchmark},
@@ -73,6 +72,12 @@ class Menu
 	const int GL_VERSION_MINOR = 4;
 	BoidsDrawer* drawer;
 
+	static bool isCudaAvaialable()
+	{
+		int deviceCount;
+		cudaError_t cerr = cudaGetDeviceCount(&deviceCount);
+		return cerr == cudaSuccess && deviceCount > 0;
+	}
 	int printOptions(std::vector <MenuOption*> options, bool printUnavailble)
 	{
 		int number = 0;
@@ -110,7 +115,10 @@ class Menu
 	}
 	void printDescription() 
 	{
-		std::cout << "\033[2J\033[H" << "Boids simulation, Skrzypczak Marcin" << std::endl << std::endl;
+		std::cout << "\033[2J\033[H" << "Boids simulation, Skrzypczak Marcin" << std::endl;
+		if(!cudaAvailable)
+			std::cout << unavailblePolicyMessage << std::endl;
+		std::cout << std::endl ;
 		
 	}
 	void createDrawer(uint N, uint size, BoidsLogic* logic)
@@ -128,15 +136,16 @@ class Menu
 			drawer->update();
 			drawer->render();
 		}
+		running = false;
 	}
 	void runBenchmark()
 	{
-		int numFrames = 300, numRuns = 10, N = 1000;
+		int numFrames = 100, numRuns = 3, N = 10000;
 		double dt = 1 / 60;
 		printDescription();
 		std::cout << "Available engines:" << std::endl;
 		int numOptions = printOptions(availbleEngines, false);
-		std::cout << std::endl << "Each engine will start simulation from same starting conditions, calculate " << numFrames <<" frames, " << numRuns << "times." << std::endl;
+		std::cout << std::endl << "Each engine will start simulation from same starting conditions, calculate " << numFrames <<" frames, " << numRuns << " times." << std::endl;
 		std::cout << "Starting conditions:" << std::endl << std::endl;
 		std::cout << "Number of boids: " << N << std::endl;
 		std::cout << "Container size: " << 30 << std::endl << std::endl;
@@ -152,6 +161,7 @@ class Menu
 				results.push_back(std::vector<long long>());
 			}
 		}
+
 		int numberSegments = numRuns * logics.size();
 		glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 		glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 4);
@@ -185,6 +195,11 @@ class Menu
 		for (int i = 0; i < numOptions; i++)
 		{
 			pbs[i].display();
+			//warmup
+			for (int k = 0; k < numFrames/10; k++)
+			{
+				logics[i]->update(dt, instancePosition, instanceVelocity);
+			}
 			for (int j = 0; j < numRuns; j++)
 			{
 				auto start = std::chrono::high_resolution_clock::now();
@@ -201,7 +216,7 @@ class Menu
 			std::cout << std::endl;
 		};
 		std::cout << std::endl << std::endl
-			<< std::setw(20) << std::left << "name" 
+			<< std::setw(40) << std::left << "name" 
 			<< std::setw(10) << std::right << "mean" 
 			<< std::setw(10) << std::right << "min" 
 			<< std::setw(10) << std::right << "max" << std::endl;
@@ -211,7 +226,7 @@ class Menu
 			double min = *std::min_element(results[i].begin(), results[i].end());
 			double max = *std::max_element(results[i].begin(), results[i].end());
 
-			std::cout << std::setw(20) << std::left << pbs[i].getLabel() 
+			std::cout << std::setw(40) << std::left << pbs[i].getLabel() 
 				<< std::setw(10) << std::right << mean 
 				<< std::setw(10) << std::right << min 
 				<< std::setw(10) << std::right << max << std::endl;

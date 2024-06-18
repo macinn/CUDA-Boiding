@@ -171,6 +171,7 @@ private:
 	{
 		glfwPollEvents();
 
+		glfwWaitEvents();
 		this->updateKeyboardInput();
 		this->updateMouseInput();
 		this->camera->updateMouseInput(dt, this->mouseOffsetX, this->mouseOffsetY);
