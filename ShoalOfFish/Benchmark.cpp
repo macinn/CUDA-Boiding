@@ -19,7 +19,7 @@ void Menu::runBenchmark()
 	std::cout << "Starting conditions:" << std::endl << std::endl;
 	std::cout << "Number of boids: " << N << std::endl;
 	std::cout << "Container size: " << 30 << std::endl << std::endl;
-	std::vector<BoidsLogic*> logics;
+	std::vector<BoidsEngine_CPU*> logics;
 	std::vector<ProgressBar> pbs;
 	std::vector<std::vector<long long>> results;
 	for (int i = 0; i < numOptions; i++)

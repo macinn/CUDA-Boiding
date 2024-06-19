@@ -56,7 +56,7 @@ void Menu::printDescription()
 	std::cout << std::endl;
 
 }
-void Menu::createDrawer(uint N, uint size, BoidsLogic* logic)
+void Menu::createDrawer(uint N, uint size, BoidsEngine_CPU* logic)
 {
 	drawer = new BoidsDrawer("Shoal of fish",
 		WIDTH, HEIGHT,
@@ -82,7 +82,7 @@ void Menu::runDrawer()
 	std::cin >> N;
 	std::cout << "Enter container size: ";
 	std::cin >> size;
-	BoidsLogic* logic = policy->create(N, size, size, size);
+	BoidsEngine_CPU* logic = policy->create(N, size, size, size);
 	createDrawer(N, size, logic);
 	drawerLoop();
 }

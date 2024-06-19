@@ -6,7 +6,7 @@
 #include <glm/ext/vector_float3.hpp>
 #include <glm/gtx/norm.hpp>
 
-class BoidsLogicCPU_P: public BoidsLogic {
+class BoidsLogicCPU_P: public BoidsEngine_CPU {
 protected:
 	void updateData(float dt) override
 	{
@@ -77,7 +77,7 @@ public:
 	float minSpeed = 5.f;
 
 	// Constructor and destructor
-	BoidsLogicCPU_P(unsigned int N, unsigned int width, unsigned int height, unsigned int depth) : BoidsLogic(N, width, height, depth) {}
+	BoidsLogicCPU_P(unsigned int N, unsigned int width, unsigned int height, unsigned int depth) : BoidsEngine_CPU(N, width, height, depth) {}
 
 	// Update boids position and velocity
 	virtual void update(float dt, GLuint positionBuffer, GLuint velocityBuffer) {

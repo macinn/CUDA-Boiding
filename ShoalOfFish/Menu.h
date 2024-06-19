@@ -26,11 +26,11 @@ public:
 class LogicOption : public MenuOption
 {
 public:
-	LogicOption(std::string name, bool isAvailable, BoidsLogic* (*create)(unsigned, unsigned, unsigned, unsigned)) : MenuOption(name, isAvailable)
+	LogicOption(std::string name, bool isAvailable, BoidsEngine_CPU* (*create)(unsigned, unsigned, unsigned, unsigned)) : MenuOption(name, isAvailable)
 	{
 		this->create = create;
 	}
-	BoidsLogic* (*create)(unsigned, unsigned, unsigned, unsigned);
+	BoidsEngine_CPU* (*create)(unsigned, unsigned, unsigned, unsigned);
 };
 
 class ModeOption : public MenuOption
@@ -48,13 +48,13 @@ class Menu
 	bool running = true;
 	const bool cudaAvailable = isCudaAvaialable();
 	std::vector<MenuOption*> availbleEngines = {
-		new LogicOption("CPU", true, [](uint N, uint w, uint h, uint d) -> BoidsLogic*
-			{return new BoidsLogic(N, w, h, d); }),
-		new LogicOption("CPU parallel TEST", true, [](uint N, uint w, uint h, uint d) -> BoidsLogic*
+		new LogicOption("CPU", true, [](uint N, uint w, uint h, uint d) -> BoidsEngine_CPU*
+			{return new BoidsEngine_CPU(N, w, h, d); }),
+		new LogicOption("CPU parallel TEST", true, [](uint N, uint w, uint h, uint d) -> BoidsEngine_CPU*
 			{return new BoidsLogicTEST(N, w, h, d); }),
-		new LogicOption("CPU parallel", true, [](uint N, uint w, uint h, uint d) -> BoidsLogic*
+		new LogicOption("CPU parallel", true, [](uint N, uint w, uint h, uint d) -> BoidsEngine_CPU*
 			{return new BoidsLogicCPU_P(N, w, h, d); }),
-		new LogicOption("GPU with spatial hashing", cudaAvailable, [](uint N, uint w, uint h, uint d) -> BoidsLogic*
+		new LogicOption("GPU with spatial hashing", cudaAvailable, [](uint N, uint w, uint h, uint d) -> BoidsEngine_CPU*
 			{return new BoidsLogicGPU_SH(N, w, h, d); }) };
 	std::vector<MenuOption*> availbleModes = {
 		new ModeOption{"Run simulation", &Menu::runDrawer},
@@ -72,7 +72,7 @@ class Menu
 	int printOptions(std::vector <MenuOption*> options, bool printUnavailble);
 	MenuOption* selectOptions(std::string text, std::vector<MenuOption*> options, bool printUnavailble);
 	void printDescription();
-	void createDrawer(uint N, uint size, BoidsLogic* logic);
+	void createDrawer(uint N, uint size, BoidsEngine_CPU* logic);
 	void drawerLoop();
 	void runBenchmark();
 	void runDrawer();

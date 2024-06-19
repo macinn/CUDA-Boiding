@@ -6,7 +6,7 @@
 #include <glm/ext/vector_float3.hpp>
 #include <glm/gtx/norm.hpp>
 
-class BoidsLogic {
+class BoidsEngine_CPU {
 protected:
 	// Boids number and container size
 	const unsigned int N;
@@ -144,7 +144,7 @@ public:
 	float minSpeed = 5.f;
 
 	// Constructor and destructor
-	BoidsLogic(unsigned int N, unsigned int width, unsigned int height, unsigned int depth):
+	BoidsEngine_CPU(unsigned int N, unsigned int width, unsigned int height, unsigned int depth):
 		N(N), width(width), height(height), depth(!depth ? (width+height)/2 : depth)
 	{
 		boids_p = new glm::vec3[N]();
@@ -152,7 +152,7 @@ public:
 		this->init();
 	}
 
-	virtual ~BoidsLogic() {
+	virtual ~BoidsEngine_CPU() {
 		delete[] boids_p;
 		delete[] boids_v;
 	}
