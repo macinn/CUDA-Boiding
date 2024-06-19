@@ -136,11 +136,11 @@ class Menu
 			drawer->update();
 			drawer->render();
 		}
-		running = false;
+		delete drawer;
 	}
 	void runBenchmark()
 	{
-		int numFrames = 100, numRuns = 3, N = 10000;
+		int numFrames = 100, numRuns = 3, N = 1000;
 		double dt = 1 / 60;
 		printDescription();
 		std::cout << "Available engines:" << std::endl;
@@ -254,6 +254,11 @@ class Menu
 		running = false;
 	}
 public:
+	~Menu()
+	{
+		delete[] availbleEngines.data();
+		delete[] availbleModes.data();
+	}
 	void run()
 	{
 		while (running)
