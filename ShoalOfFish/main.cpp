@@ -1,4 +1,4 @@
-#include "Menu.cpp"
+#include "Menu.h"
 
 int main()
 {
@@ -7,4 +7,3 @@ int main()
 
 	return 0;
 }
-

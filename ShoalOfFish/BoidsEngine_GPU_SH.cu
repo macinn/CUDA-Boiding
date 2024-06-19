@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BoidsLogicGPU_SH.cuh" 
+#include "BoidsEngine_GPU_SH.cuh"
 #include <random>
 
 #include "device_launch_parameters.h"
@@ -24,20 +24,20 @@
 #define BLOCK_NUMBER 12
 
 // returns std::max(std::min(x, max), min)
-__device__ int clamp(int min, int x, int max)
+__device__ inline int clamp(int min, int x, int max)
 {
     return x < min ? min : (x > max ? max : x);
 }
 
 // calculates the squared distance between two points
-__device__ float distance2(glm::vec3 a, glm::vec3 b) {
+__device__ inline float distance2(glm::vec3 a, glm::vec3 b) {
     return (a.x - b.x) * (a.x - b.x)
         + (a.y - b.y) * (a.y - b.y)
         + (a.z - b.z) * (a.z - b.z);
 }
 
 // calculates the l2 norm of a vector
-__device__ float l2Norm(glm::vec3 a) {
+__device__ inline float l2Norm(glm::vec3 a) {
     return sqrtf(a.x * a.x + a.y * a.y + a.z * a.z);
 }
 

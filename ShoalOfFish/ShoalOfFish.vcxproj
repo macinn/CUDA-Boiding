@@ -151,9 +151,15 @@
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</ExcludedFromBuild>
     </ClInclude>
-    <ClInclude Include="BoidsLogicGPU_SH.cuh" />
+    <ClInclude Include="BoidsDrawer.h" />
+    <ClInclude Include="BoidsEngine.h" />
+    <ClInclude Include="BoidsEngine_CPU.h" />
+    <ClInclude Include="BoidsEngine_CPU_P.h" />
+    <ClInclude Include="BoidsEngine_GPU_SH.cuh" />
+    <ClInclude Include="BoidsEngine_CPU_TEST.h" />
     <ClInclude Include="Menu.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="ProgressBar.h" />
     <ClInclude Include="shaders_box.h" />
     <ClInclude Include="shaders_core.h" />
   </ItemGroup>
@@ -165,9 +171,10 @@
     <ClCompile Include="..\Dependencies\include\imgui\imgui_draw.cpp" />
     <ClCompile Include="..\Dependencies\include\imgui\imgui_tables.cpp" />
     <ClCompile Include="..\Dependencies\include\imgui\imgui_widgets.cpp" />
-    <ClCompile Include="BoidsLogic.cpp" />
-    <ClCompile Include="BoidsLogickCPU_P.cpp" />
-    <ClCompile Include="BoidsLogicTEST.cpp" />
+    <ClCompile Include="Benchmark.cpp" />
+    <ClCompile Include="BoidsEngine.cpp" />
+    <ClCompile Include="BoidsEngine_CPU_P.cpp" />
+    <ClCompile Include="BoidsEngine_CPU_TEST.cpp" />
     <ClCompile Include="BoidsModel.cpp" />
     <ClCompile Include="BoxModel.cpp" />
     <ClCompile Include="Camera.cpp" />
@@ -175,7 +182,7 @@
     <ClCompile Include="Shader.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <CudaCompile Include="BoidsLogicGPU_SH.cpp">
+    <CudaCompile Include="BoidsEngine_GPU_SH.cu">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</ExcludedFromBuild>
     </CudaCompile>

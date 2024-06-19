@@ -1,11 +1,16 @@
 #pragma once
 
-#include "BoidsLogic.cpp"
+#include "BoidsEngine.cpp"
+#include <omp.h>
+#include <GL/glew.h>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/gtx/norm.hpp>
 
-class BoidsLogicTEST : public BoidsLogic {
+class BoidsLogicCPU_P: public BoidsLogic {
 protected:
 	void updateData(float dt) override
 	{
+#pragma omp parallel
 		{
 			float visualRangeSquared = visualRange * visualRange;
 			float protectedRangeSquared = protectedRange * protectedRange;
@@ -18,12 +23,8 @@ protected:
 				glm::vec3 close = glm::vec3(0.0f);
 
 				for (unsigned int j = 0; j < N; j++) {
-					glm::vec3 diff = boids_p[i] - boids_p[j];
-					if (/*diff.x < visualRange 
-						&& diff.y < visualRange 
-						&& diff.z < visualRange
-						&&*/ i != j) {
-						float distanceSquared = glm::length2(diff);
+					if (i != j) {
+						float distanceSquared = glm::distance2(boids_p[i], boids_p[j]);
 						if (distanceSquared < visualRangeSquared)
 						{
 							center += boids_p[j];
@@ -56,6 +57,7 @@ protected:
 					+ (vel - boids_v[i]) * matchingFactor;		// alignment
 			}
 		}
+#pragma omp parallel for
 		for (int i = 0; i < N; i++)
 		{
 			boundPosition(i);
@@ -75,7 +77,7 @@ public:
 	float minSpeed = 5.f;
 
 	// Constructor and destructor
-	BoidsLogicTEST(unsigned int N, unsigned int width, unsigned int height, unsigned int depth) : BoidsLogic(N, width, height, depth) {}
+	BoidsLogicCPU_P(unsigned int N, unsigned int width, unsigned int height, unsigned int depth) : BoidsLogic(N, width, height, depth) {}
 
 	// Update boids position and velocity
 	virtual void update(float dt, GLuint positionBuffer, GLuint velocityBuffer) {

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BoidsLogic.cpp"
+#include "BoidsEngine.cpp"
 #include "BoidsModel.cpp"
 #include "BoxModel.cpp"
 #include "Camera.cpp"
