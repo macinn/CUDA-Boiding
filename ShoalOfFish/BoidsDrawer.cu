@@ -415,7 +415,7 @@ public:
 	}
 
 	// Set boids logic class
-	void setBoidsLogic(BoidsEngine_CPU* boidsLogic)
+	void setBoidsLogic(BoidsEngine* boidsLogic)
 	{
 		this->boidsLogic = boidsLogic;
 	}

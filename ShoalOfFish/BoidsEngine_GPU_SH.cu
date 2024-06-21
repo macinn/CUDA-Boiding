@@ -303,7 +303,7 @@ __global__ void updateBoidsKernel(const float dt, const unsigned int N,
 
     // Constructor and destructor
     BoidsLogicGPU_SH::BoidsLogicGPU_SH(unsigned int N, unsigned int width, unsigned int height, unsigned int depth) :
-        BoidsEngine_CPU(N, width, height, depth)
+        BoidsEngine(N, width, height, depth)
 	{
         cudaError_t cudaStatus;
 

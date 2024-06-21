@@ -2,6 +2,7 @@
 
 #include <string>
 #include "BoidsDrawer.cu" 
+#include "BoidsEngine.h"
 #include "BoidsEngine_GPU_SH.cuh"
 #include "BoidsEngine_CPU_P.cpp"
 #include "BoidsEngine_CPU_TEST.cpp"
@@ -26,11 +27,11 @@ public:
 class LogicOption : public MenuOption
 {
 public:
-	LogicOption(std::string name, bool isAvailable, BoidsEngine_CPU* (*create)(unsigned, unsigned, unsigned, unsigned)) : MenuOption(name, isAvailable)
+	LogicOption(std::string name, bool isAvailable, BoidsEngine* (*create)(unsigned, unsigned, unsigned, unsigned)) : MenuOption(name, isAvailable)
 	{
 		this->create = create;
 	}
-	BoidsEngine_CPU* (*create)(unsigned, unsigned, unsigned, unsigned);
+	BoidsEngine* (*create)(unsigned, unsigned, unsigned, unsigned);
 };
 
 class ModeOption : public MenuOption
@@ -48,13 +49,13 @@ class Menu
 	bool running = true;
 	const bool cudaAvailable = isCudaAvaialable();
 	std::vector<MenuOption*> availbleEngines = {
-		new LogicOption("CPU", true, [](uint N, uint w, uint h, uint d) -> BoidsEngine_CPU*
+		new LogicOption("CPU", true, [](uint N, uint w, uint h, uint d) -> BoidsEngine*
 			{return new BoidsEngine_CPU(N, w, h, d); }),
-		new LogicOption("CPU parallel TEST", true, [](uint N, uint w, uint h, uint d) -> BoidsEngine_CPU*
+		new LogicOption("CPU parallel TEST", true, [](uint N, uint w, uint h, uint d) -> BoidsEngine*
 			{return new BoidsLogicTEST(N, w, h, d); }),
-		new LogicOption("CPU parallel", true, [](uint N, uint w, uint h, uint d) -> BoidsEngine_CPU*
+		new LogicOption("CPU parallel", true, [](uint N, uint w, uint h, uint d) -> BoidsEngine*
 			{return new BoidsLogicCPU_P(N, w, h, d); }),
-		new LogicOption("GPU with spatial hashing", cudaAvailable, [](uint N, uint w, uint h, uint d) -> BoidsEngine_CPU*
+		new LogicOption("GPU with spatial hashing", cudaAvailable, [](uint N, uint w, uint h, uint d) -> BoidsEngine*
 			{return new BoidsLogicGPU_SH(N, w, h, d); }) };
 	std::vector<MenuOption*> availbleModes = {
 		new ModeOption{"Run simulation", &Menu::runDrawer},
@@ -72,7 +73,7 @@ class Menu
 	int printOptions(std::vector <MenuOption*> options, bool printUnavailble);
 	MenuOption* selectOptions(std::string text, std::vector<MenuOption*> options, bool printUnavailble);
 	void printDescription();
-	void createDrawer(uint N, uint size, BoidsEngine_CPU* logic);
+	void createDrawer(uint N, uint size, BoidsEngine* logic);
 	void drawerLoop();
 	void runBenchmark();
 	void runDrawer();
