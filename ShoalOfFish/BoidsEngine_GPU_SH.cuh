@@ -25,7 +25,7 @@
 #define BLOCK_SIZE 1024
 #define BLOCK_NUMBER 12
 
-class BoidsLogicGPU_SH : public BoidsEngine_CPU {
+class BoidsLogicGPU_SH : public BoidsLogic {
 private:
     glm::vec3* dev_boids_p;
     glm::vec3* dev_boids_v;

@@ -3,7 +3,7 @@
 #include "BoidsEngine.cpp"
 #include <glm/gtx/norm.hpp>
 
-class BoidsLogicTEST : public BoidsEngine_CPU {
+class BoidsLogicTEST : public BoidsLogic {
 protected:
 	void updateData(float dt) override
 	{
@@ -76,7 +76,7 @@ public:
 	float minSpeed = 5.f;
 
 	// Constructor and destructor
-	BoidsLogicTEST(unsigned int N, unsigned int width, unsigned int height, unsigned int depth) : BoidsEngine_CPU(N, width, height, depth) {}
+	BoidsLogicTEST(unsigned int N, unsigned int width, unsigned int height, unsigned int depth) : BoidsLogic(N, width, height, depth) {}
 
 	// Update boids position and velocity
 	virtual void update(float dt, GLuint positionBuffer, GLuint velocityBuffer) {

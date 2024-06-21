@@ -39,7 +39,7 @@ private:
 	BoxModel* boxModel;
 
 	// Boids logic
-	BoidsEngine_CPU* boidsLogic;
+	BoidsLogic* boidsLogic;
 
 	// Camera
 	Camera* camera;
@@ -415,7 +415,7 @@ public:
 	}
 
 	// Set boids logic class
-	void setBoidsLogic(BoidsEngine_CPU* boidsLogic)
+	void setBoidsLogic(BoidsLogic* boidsLogic)
 	{
 		this->boidsLogic = boidsLogic;
 	}

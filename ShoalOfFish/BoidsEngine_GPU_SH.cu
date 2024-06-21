@@ -303,7 +303,7 @@ __global__ void updateBoidsKernel(const float dt, const unsigned int N,
 
     // Constructor and destructor
     BoidsLogicGPU_SH::BoidsLogicGPU_SH(unsigned int N, unsigned int width, unsigned int height, unsigned int depth) :
-        BoidsEngine_CPU(N, width, height, depth)
+        BoidsLogic(N, width, height, depth)
 	{
         cudaError_t cudaStatus;
 
@@ -372,6 +372,14 @@ __global__ void updateBoidsKernel(const float dt, const unsigned int N,
             }
         }
 
+        // Measure time
+        cudaEvent_t assignGridIndEvent, sortGridEvent, updateDataEvent, endEvent;
+        cudaEventCreate(&assignGridIndEvent);
+        cudaEventCreate(&sortGridEvent);
+        cudaEventCreate(&updateDataEvent);
+        cudaEventCreate(&endEvent);
+        bool afterFirstLoop = false;
+        /////////////////
 
         cudaGraphicsMapResources(1, &cuda_boids_p);
         cudaStatus = cudaGraphicsResourceGetMappedPointer((void**)&dev_boids_p, &size, cuda_boids_p);
@@ -384,7 +392,10 @@ __global__ void updateBoidsKernel(const float dt, const unsigned int N,
             this->init();
         }
 
+        cudaEventRecord(assignGridIndEvent);
         assignGridInd();
+
+        cudaEventRecord(sortGridEvent);
         sortGrid();
 
         cudaGraphicsMapResources(1, &cuda_boids_v);
@@ -394,8 +405,10 @@ __global__ void updateBoidsKernel(const float dt, const unsigned int N,
             throw std::runtime_error("cudaGraphicsResourceGetMappedPointer failed!");
         }
 
+        cudaEventRecord(updateDataEvent);
         // update boids position and velocity and send back to openGL buffer object
         updateData(dt);
+        cudaEventRecord(endEvent);
         
         cudaStatus = cudaGraphicsUnmapResources(1, &cuda_boids_p, 0);
         if (cudaStatus != cudaSuccess) {
@@ -405,6 +418,25 @@ __global__ void updateBoidsKernel(const float dt, const unsigned int N,
         if (cudaStatus != cudaSuccess) {
             throw std::runtime_error("cudaGraphicsUnmapResources failed!");
         }
+
+        firstRun = false;
+
+        // Measure time
+        if (false)
+        {
+            float milliseconds = 0;
+            cudaEventElapsedTime(&milliseconds, assignGridIndEvent, sortGridEvent);
+            std::cout << "assignGridInd: " << milliseconds << " ms" << std::endl;
+            cudaEventElapsedTime(&milliseconds, sortGridEvent, updateDataEvent);
+            std::cout << "sortGrid: " << milliseconds << " ms" << std::endl;
+            cudaEventElapsedTime(&milliseconds, updateDataEvent, endEvent);
+            std::cout << "updateData: " << milliseconds << " ms" << std::endl;
+            cudaEventDestroy(assignGridIndEvent);
+            cudaEventDestroy(sortGridEvent);
+            cudaEventDestroy(updateDataEvent);
+            cudaEventDestroy(endEvent);
+        }
+        ///////////////////////
     }
 
     // Set visual range, update grid parameters
