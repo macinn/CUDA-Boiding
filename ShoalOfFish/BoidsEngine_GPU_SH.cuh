@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "BoidsEngine.cpp"
+#include "BoidsEngine.h"
 #include <random>
 
 #include "device_launch_parameters.h"
@@ -25,7 +25,7 @@
 #define BLOCK_SIZE 1024
 #define BLOCK_NUMBER 12
 
-class BoidsLogicGPU_SH : public BoidsEngine_CPU {
+class BoidsLogicGPU_SH : public BoidsEngine {
 private:
     glm::vec3* dev_boids_p;
     glm::vec3* dev_boids_v;

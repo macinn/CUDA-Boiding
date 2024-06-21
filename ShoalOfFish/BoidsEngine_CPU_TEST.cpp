@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BoidsEngine.cpp"
+#include "BoidsEngine_CPU.cpp"
 #include <glm/gtx/norm.hpp>
 
 class BoidsLogicTEST : public BoidsEngine_CPU {
