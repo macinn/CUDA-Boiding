@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BoidsEngine_CPU.cpp"
+#include "BoidsEngine.cpp"
 #include <omp.h>
 #include <GL/glew.h>
 #include <glm/ext/vector_float3.hpp>

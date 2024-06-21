@@ -1,6 +1,10 @@
 #pragma once
 
 #include <GL/glew.h>
+#include <random>
+#include <time.h>
+#include <glm/ext/vector_float3.hpp>
+#include <glm/gtx/norm.hpp>
 
 class BoidsEngine
 {
@@ -21,10 +25,10 @@ protected:
 	virtual void init() {};
 
 	// Bound boid velocity to min and max speed
-	void inline boundVelocity(int i) = delete;
+	virtual void inline boundVelocity(int i) = delete;
 
 	// Bound boid position to container
-	void inline boundPosition(int i) = delete;
+	virtual void inline boundPosition(int i) = delete;
 
 	// Update position and velocity
 	virtual void updateData(float dt) {};

@@ -1,19 +1,28 @@
 #pragma once
 
+#include <GL/glew.h>
 #include <random>
 #include <time.h>
 #include <glm/ext/vector_float3.hpp>
 #include <glm/gtx/norm.hpp>
-#include "BoidsEngine.h"
 
-class BoidsEngine_CPU: public BoidsEngine {
+class BoidsEngine_CPU {
 protected:
+	// Boids number and container size
+	const unsigned int N;
+	const unsigned int width;
+	const unsigned int height;
+	const unsigned int depth;
+
 	// Boids position and velocity
 	glm::vec3* boids_p;
 	glm::vec3* boids_v;
 
+	// Margin factor for boids to turn around
+	const float marginFactor = 0.05f;
+
 	// Initialize boids position
-	void init() override {
+	void init() {
 		std::default_random_engine rd{ static_cast<unsigned int>(time(0)) };
 		std::mt19937 gen{ rd() };
 		std::uniform_real_distribution<> w(0, width);
@@ -136,8 +145,12 @@ public:
 
 	// Constructor and destructor
 	BoidsEngine_CPU(unsigned int N, unsigned int width, unsigned int height, unsigned int depth):
-		BoidsEngine(N, width, height, depth) {}
-	
+		N(N), width(width), height(height), depth(!depth ? (width+height)/2 : depth)
+	{
+		boids_p = new glm::vec3[N]();
+		boids_v = new glm::vec3[N]();
+		this->init();
+	}
 
 	virtual ~BoidsEngine_CPU() {
 		delete[] boids_p;

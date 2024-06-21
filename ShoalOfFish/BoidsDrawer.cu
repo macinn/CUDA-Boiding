@@ -1,6 +1,6 @@
 #pragma once
 
-#include "BoidsEngine.h"
+#include "BoidsEngine.cpp"
 #include "BoidsModel.cpp"
 #include "BoxModel.cpp"
 #include "Camera.cpp"
@@ -39,7 +39,7 @@ private:
 	BoxModel* boxModel;
 
 	// Boids logic
-	BoidsEngine* boidsLogic;
+	BoidsEngine_CPU* boidsLogic;
 
 	// Camera
 	Camera* camera;
