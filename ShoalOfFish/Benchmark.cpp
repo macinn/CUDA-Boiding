@@ -6,24 +6,20 @@
 
 #include "Menu.h"
 #include "ProgressBar.cpp"
-#include "BoidsEngine.h"
+#include "BoidsEngine.cpp"
 
 void Menu::runBenchmark()
 {
 	int numFrames = 100, numRuns = 3, N = 1000;
-	double dt = 1. / 60;
+	double dt = 1 / 60;
 	printDescription();
-	std::cout << "Set number of boids (default " << N << "): ";
-	std::cin >> N;
-	std::cout << "Set number of frames to calculate (default " << numFrames << "): ";
-	std::cin >> numFrames;
 	std::cout << "Available engines:" << std::endl;
 	int numOptions = printOptions(availbleEngines, false);
 	std::cout << std::endl << "Each engine will start simulation from same starting conditions, calculate " << numFrames << " frames, " << numRuns << " times." << std::endl;
 	std::cout << "Starting conditions:" << std::endl << std::endl;
 	std::cout << "Number of boids: " << N << std::endl;
 	std::cout << "Container size: " << 30 << std::endl << std::endl;
-	std::vector<BoidsEngine*> logics;
+	std::vector<BoidsEngine_CPU*> logics;
 	std::vector<ProgressBar> pbs;
 	std::vector<std::vector<long long>> results;
 	for (int i = 0; i < numOptions; i++)
@@ -110,4 +106,3 @@ void Menu::runBenchmark()
 	std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 	std::cin.get();
 }
-

@@ -54,8 +54,9 @@ void Menu::printDescription()
 	if (!cudaAvailable)
 		std::cout << unavailblePolicyMessage << std::endl;
 	std::cout << std::endl;
+
 }
-void Menu::createDrawer(uint N, uint size, BoidsEngine* logic)
+void Menu::createDrawer(uint N, uint size, BoidsEngine_CPU* logic)
 {
 	drawer = new BoidsDrawer("Shoal of fish",
 		WIDTH, HEIGHT,
@@ -81,7 +82,7 @@ void Menu::runDrawer()
 	std::cin >> N;
 	std::cout << "Enter container size: ";
 	std::cin >> size;
-	BoidsEngine* logic = policy->create(N, size, size, size);
+	BoidsEngine_CPU* logic = policy->create(N, size, size, size);
 	createDrawer(N, size, logic);
 	drawerLoop();
 }
@@ -89,7 +90,6 @@ void Menu::exit()
 {
 	running = false;
 }
-
 // public
 Menu::~Menu()
 {

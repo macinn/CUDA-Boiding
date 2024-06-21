@@ -50,7 +50,7 @@ public:
 		this->init();
 	};
 
-	virtual ~BoidsEngine() {};
+	virtual ~BoidsEngine() = 0;
 
 	// Update boids position and velocity
 	virtual void update(float dt, GLuint positionBuffer, GLuint velocityBuffer) {
